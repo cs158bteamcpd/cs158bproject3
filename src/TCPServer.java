@@ -10,7 +10,7 @@ public class TCPServer extends Thread{
 	private ArrayList<SNMP> snmp;
     
     private static Socket s;
-    private static int port=9999;
+    private static int port=9000;
     public TCPServer(Socket s,ArrayList<SNMP> snmp){
     	this.s = s;
     	this.snmp = snmp;
@@ -26,10 +26,17 @@ public class TCPServer extends Thread{
     	
     		InputStream is = s.getInputStream();
     		
+    		
     		while(!s.isClosed()){
 	    		ObjectInputStream ois = new ObjectInputStream(is);  
 	    		SNMP obj = (SNMP)ois.readObject();
+	    		if(obj.pdutype.equalsIgnoreCase("TRAP"))
 	    		snmp.add(obj);
+	    		if(obj.pdutype.equalsIgnoreCase("GET"))
+	    		{
+	    			ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
+	    			oos.writeObject(snmp);
+	    		}
 	    		System.out.println("PDU TYPE: " +obj.pdutype);
 	    		
 	    		
@@ -44,11 +51,11 @@ public class TCPServer extends Thread{
     	
     }
     
-    public static void main(String[] args) throws IOException
+	public static void main(String[] args) throws IOException
     {
     	//Socket s = new Socket("localhost",port); 
     	ArrayList<SNMP> snmp = new ArrayList<SNMP>();
-    	ServerSocket ss = new ServerSocket(9999);
+    	ServerSocket ss = new ServerSocket(9000);
     	while(true)
     		new TCPServer(ss.accept(),snmp).start();   
 		
