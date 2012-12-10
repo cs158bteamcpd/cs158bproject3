@@ -135,9 +135,9 @@ class SNMPInterperter extends Thread{
 			Enumeration e = oid.keys();
 			String key = (String)e.nextElement();
 			String value = snmp.vBinding.get(key);
-			if(!(snmp.community.equalsIgnoreCase(ne.community))){
+			if(!(snmp. getCommunity().equalsIgnoreCase(ne.community))){
 				
-				System.out.println(snmp.community +"!+"+ne.community);
+				System.out.println(snmp. getCommunity() +"!+"+ne.community);
 				Hashtable<String,String> ht = new Hashtable<String,String>();
 				ht.put(key, "Community String is wrong");
 				SNMP snmp = new SNMP("1",ne.community,"1","RESPONSE", ht);
