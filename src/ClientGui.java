@@ -9,7 +9,7 @@ import javax.swing.*;
  * Client side gui that will interact with the tcp server and network
  * elements
  * 
- * @author TeamCPD
+ * @author TeamCPD 
  *
  */
 public class ClientGui extends JPanel implements ActionListener{
