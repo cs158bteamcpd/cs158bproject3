@@ -27,6 +27,7 @@ public class ClientGui extends JPanel implements ActionListener{
 	protected JTextField textFieldCommStr;
     protected JTextArea textArea;
     protected JComboBox comboBoxMethods;
+    protected static JTextField textFieldSet;
     private SNMP snmp = null;
     
     private final static String newline = "\n";
@@ -78,7 +79,16 @@ public class ClientGui extends JPanel implements ActionListener{
         comboBoxMethods = new JComboBox(methodStr);
         comboBoxMethods.setToolTipText("Choose GET or SET method");
         comboBoxMethods.setSelectedIndex(0);
-        
+        //add listner to combobox
+        comboBoxMethods.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent e)
+            {
+                if ( ((String) comboBoxMethods.getSelectedItem()).equalsIgnoreCase("set") )
+                {
+                	createAndShowPopUp();
+                }
+            }
+        });
         
         //Add Components to this panel.
         GridBagConstraints c = new GridBagConstraints();
@@ -114,7 +124,8 @@ public class ClientGui extends JPanel implements ActionListener{
      * this method should be invoked from the
      * event dispatch thread.
      */
-    private static void createAndShowGUI() {
+    private static void createAndShowGUI() 
+    {
         //Create and set up the window.
         JFrame frame = new JFrame("Client Gui");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -128,6 +139,62 @@ public class ClientGui extends JPanel implements ActionListener{
         frame.setLocationRelativeTo(null); //this makes the window appear at the center
         frame.setVisible(true);
     }
+    
+    /**
+     * Create the GUI for the Set method of the combo box
+     */
+    private static void createAndShowPopUp() 
+    {
+    	
+        
+    	
+    	//-----------------------
+    	
+    	//Create and set up the window.
+        final JFrame frame = new JFrame("SET Method");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        
+        //got my jpanel
+    	JPanel methodGUI = new JPanel(new GridBagLayout());
+    	
+    	//created new textfield
+        textFieldSet = new JTextField(20);
+        textFieldSet.setToolTipText("Please enter in a value!");
+    	
+        //create new button
+        JButton b = new JButton("Submit");
+        b.setToolTipText("Click to submit");
+        b.addActionListener(new ActionListener() {
+ 
+            public void actionPerformed(ActionEvent e)
+            {
+                frame.dispose();
+            }
+        });      
+        
+        //Add Components to this panel.
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridwidth = GridBagConstraints.REMAINDER;
+ 
+        //SET
+        methodGUI.add(new JLabel("SET value ")); //add label for OID
+        c.fill = GridBagConstraints.HORIZONTAL;
+        methodGUI.add(textFieldSet, c); //SET value
+                
+        c.fill = GridBagConstraints.HORIZONTAL;
+        methodGUI.add(b, c); //SET value
+        
+        //Add contents to the window.
+        frame.add(methodGUI);
+ 
+        
+        //Display the window.
+        frame.pack(); // this packs all the components in the frame
+        //frame.setSize(400, 400);
+        frame.setLocationRelativeTo(null); //this makes the window appear at the center
+        frame.setVisible(true);
+    }
 
 	@Override
 	public void actionPerformed(ActionEvent evt) {
@@ -138,13 +205,25 @@ public class ClientGui extends JPanel implements ActionListener{
 		try {
 			Socket s = new Socket("localhost", 9999);// host, port
 
-			// create new hashtable
-			Hashtable<String, String> ht = new Hashtable<String, String>();
-			// put OID in hashtable
-			ht.put(OID, OID);
-			// set new SNMP object
-			snmp = new SNMP("1", CommStr, "1", methodGetOrSet, ht);
-
+			if(methodGetOrSet.equalsIgnoreCase("get"))
+			{
+				Hashtable<String,String> ht = new Hashtable<String,String>();
+				
+				ht.put(OID, OID);
+				
+				snmp = new SNMP("1",CommStr,"1","GET", ht);
+			} 
+			else 
+			{
+				
+				Hashtable<String,String> ht = new Hashtable<String,String>();
+				
+				ht.put(OID, textFieldSet.getText());
+				
+				snmp = new SNMP("1",CommStr,"1","SET", ht);
+				
+			}
+			
 			//create the OutputStream to write
 			ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
 			//write the SNMP object to server
