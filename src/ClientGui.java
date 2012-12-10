@@ -88,13 +88,13 @@ public class ClientGui extends JPanel implements ActionListener{
         	public void actionPerformed(ActionEvent evt)
             {
 				try {
-					// Socket s = new Socket("localhost", 9999);// host, port
-					if (s == null) 
+					Socket s = new Socket(textFieldHost.getText(), Integer.parseInt(textFieldPort.getText()));// host, port
+					/*if (s == null) 
 					{
 						//s = new Socket("localhost", 9999);// host, port
 						s = new Socket(textFieldHost.getText(), Integer.parseInt(textFieldPort.getText()));// host, port
 
-					}
+					}*/
 
 					Hashtable<String, String> ht = new Hashtable<String, String>();
 
@@ -105,6 +105,14 @@ public class ClientGui extends JPanel implements ActionListener{
 					
 					//setting the flag to true to get events
 					snmp.setFlag();
+					
+					//create the OutputStream to write
+					ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
+					//write the SNMP object to server
+					oos.writeObject(snmp);
+
+					// Now Wait for response
+					ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
 					
 					// get the RMONevent response
 					ArrayList<RMONEvent> response = (ArrayList<RMONEvent>) ois.readObject();
@@ -280,12 +288,12 @@ public class ClientGui extends JPanel implements ActionListener{
 		
 		try {
 			
-			//Socket s = new Socket("localhost", 9999);// host, port
-			if (s == null)
+			Socket s = new Socket(textFieldHost.getText(), Integer.parseInt(textFieldPort.getText()));// host, port
+			/*if (s == null)
 			{
 				//s = new Socket("localhost", 9999);// host, port
 				s = new Socket(textFieldHost.getText(), Integer.parseInt(textFieldPort.getText()));// host, port
-			}
+			}*/
 			
 			
 			if(methodGetOrSet.equalsIgnoreCase("get"))
@@ -308,19 +316,25 @@ public class ClientGui extends JPanel implements ActionListener{
 			}
 			
 			
-			if (oos == null) //if it's not open
+			/*if (oos == null) //if it's not open
 			{
 				// create the OutputStream to write
 				oos = new ObjectOutputStream(s.getOutputStream());
-			}
+			}*/
+			ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
+
 			// write the SNMP object to server
 			oos.writeObject(snmp);
-
-			if (ois == null) //if it's not open
+			oos.flush();
+			/*if (ois == null) //if it's not open
 			{
 				// Now Wait for response
 				ois = new ObjectInputStream(s.getInputStream());
-			}
+			}*/
+			
+			ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
+
+			
 			// get the SNMP response
 			SNMP response = (SNMP) ois.readObject();
 
