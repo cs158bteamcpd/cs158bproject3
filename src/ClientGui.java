@@ -164,11 +164,12 @@ public class ClientGui extends JPanel implements ActionListener{
         add(new JLabel("GET or SET ")); //add label for methods
         c.fill = GridBagConstraints.HORIZONTAL;
         add(comboBoxMethods, c); //combo box selection
-        
-        
-        //add button, submit
+                
+        //add buttons, submit, get alarm
         add(b, c);
- 
+        add(getAlarmButton, c);
+        
+        
         c.fill = GridBagConstraints.BOTH;
         c.weightx = 1.0;
         c.weighty = 1.0;
