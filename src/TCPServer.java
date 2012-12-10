@@ -10,7 +10,7 @@ public class TCPServer extends Thread{
 	private ArrayList<RMONEvent> rMonEvent;
     
     private static Socket s;
-    private static int port=9000;
+    private static int port=9999;
     public TCPServer(Socket s,ArrayList<RMONEvent> rMonEvent){
     	this.s = s;
     	this.rMonEvent = rMonEvent;
