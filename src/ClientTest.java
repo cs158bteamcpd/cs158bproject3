@@ -8,6 +8,9 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Hashtable;
 
+// THIS IS ONLY A TEST.
+// THIS IS NOT HOW THE CLIENT SHOULD BEHAVE.
+//
 
 public class ClientTest {
 	public static void main(String[]args){
