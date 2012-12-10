@@ -14,8 +14,8 @@ import java.util.Random;
 
 
 public class NetworkElement{
-	String server = "localhost";
-	int port = 9000;
+	String server = "localhost1";
+	int port = 9999;
 	String id = "network-1";
 	String community = "password";
 	Hashtable<String, Integer> tcpMIB = new Hashtable<String, Integer>();
@@ -69,7 +69,7 @@ public class NetworkElement{
 		ne.addAlarm(1, "1.3.6.1.2.1.6.14", 70);
 		ne.startGenerator();
 		ne.startAlarmMonitor();
-		new CommunicationManager(9000,ne).start();
+		new CommunicationManager(9999,ne).start();
 	}
 	
 }
