@@ -8,7 +8,7 @@ public class SNMP implements Serializable
 	private static final long serialVersionUID = -2084003647637684925L;
 	public Hashtable<String,String> vBinding; // the variable binding, OID and value of MIB object
 	public String pdutype = "RESPONSE";
-	
+	public Boolean flag = false;
 	private String community; // the community string
 
 	private String host; // the host ID
@@ -66,6 +66,9 @@ public class SNMP implements Serializable
 	public void setVersion(String version) {
 		this.version = version;
 	}
-
+	public void setFlag()
+	{
+		flag = true;
+	}
 	//missing snmp traps
 }

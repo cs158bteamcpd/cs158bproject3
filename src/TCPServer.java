@@ -7,13 +7,13 @@ import java.io.*;
  
 public class TCPServer extends Thread{
 	
-	private ArrayList<SNMP> snmp;
+	private ArrayList<RMONEvent> rMonEvent;
     
     private static Socket s;
     private static int port=9000;
-    public TCPServer(Socket s,ArrayList<SNMP> snmp){
+    public TCPServer(Socket s,ArrayList<RMONEvent> rMonEvent){
     	this.s = s;
-    	this.snmp = snmp;
+    	this.rMonEvent = rMonEvent;
     }
     public void run()
     {
@@ -31,7 +31,12 @@ public class TCPServer extends Thread{
 	    		ObjectInputStream ois = new ObjectInputStream(is);  
 	    		SNMP obj = (SNMP)ois.readObject();
 	    		if(obj.pdutype.equalsIgnoreCase("TRAP"))
-	    		snmp.add(obj);
+	    		{
+	    			Hashtable<String,String> vBinding = obj.getvBinding();
+	    			rMonEvent.add(new RMONEvent(Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.1")), vBinding.get("1.3.6.1.2.1.16.9.1.1.2"),
+	    					Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.3")), vBinding.get("1.3.6.1.2.1.16.9.1.1.4"), Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.5")),
+	    					vBinding.get("1.3.6.1.2.1.16.9.1.1.6"), Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.7"))));
+	    		}
 	    		if(obj.pdutype.equalsIgnoreCase("SET"))
 	    		{
 	    			Socket ss = new Socket("host", port);
@@ -40,8 +45,21 @@ public class TCPServer extends Thread{
 	    		}
 	    		if(obj.pdutype.equalsIgnoreCase("GET"))
 	    		{
+	    			if(obj.flag)
+	    			{
 	    			ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
-	    			oos.writeObject(snmp);
+	    			oos.writeObject(rMonEvent);
+	    			}
+	    			else
+	    			{
+	    				Socket ss= new Socket("host", port);
+	    				ObjectOutputStream get = new ObjectOutputStream(ss.getOutputStream());
+	    				get.writeObject(obj);
+	    				ObjectInputStream ois1 = new ObjectInputStream(ss.getInputStream());   
+	    			 	SNMP response = (SNMP)ois1.readObject();
+	    			 	ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
+	    			 	oos.writeObject(response);
+	    			}
 	    		}
 	    		System.out.println("PDU TYPE: " +obj.pdutype);
 	    		
@@ -60,10 +78,10 @@ public class TCPServer extends Thread{
 	public static void main(String[] args) throws IOException
     {
     	//Socket s = new Socket("localhost",port); 
-    	ArrayList<SNMP> snmp = new ArrayList<SNMP>();
+    	ArrayList<RMONEvent> rmon = new ArrayList<RMONEvent>();
     	ServerSocket ss = new ServerSocket(9000);
     	while(true)
-    		new TCPServer(ss.accept(),snmp).start();   
+    		new TCPServer(ss.accept(),rmon).start();   
 		
     /*String command = "" ;
     while (!command.equalsIgnoreCase("Exit"))
