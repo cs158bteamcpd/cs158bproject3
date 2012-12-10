@@ -14,26 +14,36 @@ import java.util.Random;
 
 
 public class NetworkElement{
-	String server = "localhost";
+	String server = "localhost1";
 	int port = 9999;
 	String id = "network-1";
-	String community;
+	String community = "password";
 	Hashtable<String, Integer> tcpMIB = new Hashtable<String, Integer>();
 	
 	ArrayList<RMONAlarm> alarms;
 	ArrayList<RMONEvent> events;
 	public NetworkElement(){
-		community = "public";
+		community = "password";
 		alarms = new ArrayList<RMONAlarm>();
 		events = new ArrayList<RMONEvent>();
 	}
 	
 	public void generateMIB(){
-		tcpMIB.put("1.3.6.1.2.1.6.4", 0); 	// tcpMaxConn
-		tcpMIB.put("1.3.6.1.2.1.6.8", 0); 	// tcpEstabResets
-		tcpMIB.put("1.3.6.1.2.1.6.12", 0);	// tcpRetransSegs
-		tcpMIB.put("1.3.6.1.2.1.6.14", 0); 	// tcpInErrs
-		tcpMIB.put("1.3.6.1.2.1.6.15", 0); 	// tcpOutRsts
+		tcpMIB.put("1.3.6.1.2.1.6.1", 0);	//tcpRtoAlgorithm - Integer32
+		tcpMIB.put("1.3.6.1.2.1.6.2", 0);	//tcpRtoMin - Integer32
+		tcpMIB.put("1.3.6.1.2.1.6.3", 0);	//tcpRtoMax - Integer32
+		tcpMIB.put("1.3.6.1.2.1.6.4", 0); 	// tcpMaxConn - Integer32
+		tcpMIB.put("1.3.6.1.2.1.6.5", 0); 	// tcpActiveOpens- Counter32 
+		tcpMIB.put("1.3.6.1.2.1.6.6", 0); 	// tcpPassiveOpens - Counter32 
+		tcpMIB.put("1.3.6.1.2.1.6.7", 0); 	// tcpAttemptFails - Counter32 
+		tcpMIB.put("1.3.6.1.2.1.6.8", 0); 	// tcpEstabResets- Counter32 
+		tcpMIB.put("1.3.6.1.2.1.6.9", 0); 	// tcpCurrEstab - Counter32 
+		tcpMIB.put("1.3.6.1.2.1.6.10", 0); 	// tcpInSegs - Counter32 
+		tcpMIB.put("1.3.6.1.2.1.6.11", 0); 	// tcpOutSegs - Counter32 
+		tcpMIB.put("1.3.6.1.2.1.6.12", 0);	// tcpRetransSegs - Counter32 
+											// 13 is entry table
+		tcpMIB.put("1.3.6.1.2.1.6.14", 0); 	// tcpInErrs  - Counter32 
+		tcpMIB.put("1.3.6.1.2.1.6.15", 0); 	// tcpOutRsts - Counter32 
 	}
 	public void startGenerator(){
 		new EventGenerator(this).start();
@@ -101,6 +111,7 @@ class SNMPInterperter extends Thread{
 	public SNMPInterperter(Socket socket,NetworkElement ne){
 		this.ne = ne;
 		try {
+			this.socket = socket;
 			InputStream is = socket.getInputStream();
 			ObjectInputStream ois = new ObjectInputStream(is);
 			snmp = (SNMP) ois.readObject();
@@ -123,22 +134,60 @@ class SNMPInterperter extends Thread{
 			
 			Enumeration e = oid.keys();
 			String key = (String)e.nextElement();
-			
-			if(ne.tcpMIB.get(key) != null){
-				int x = ne.tcpMIB.get(key);
-				//Create new SNMP object;
+			String value = snmp.vBinding.get(key);
+			if(!(snmp.community.equalsIgnoreCase(ne.community))){
+				
+				System.out.println(snmp.community +"!+"+ne.community);
 				Hashtable<String,String> ht = new Hashtable<String,String>();
-				ht.put(key, Integer.toString(x));
-				SNMP snmp = new SNMP("1","Public","1","RESPONSE", ht);
+				ht.put(key, "Community String is wrong");
+				SNMP snmp = new SNMP("1",ne.community,"1","RESPONSE", ht);
 				oos.writeObject(snmp);
 				oos.close();
 			}
+			else if(snmp.pdutype.equalsIgnoreCase("GET")){
+				if(ne.tcpMIB.get(key) != null){
+					System.out.println("GET");
+					int x = ne.tcpMIB.get(key);
+					//Create new SNMP object;
+					Hashtable<String,String> ht = new Hashtable<String,String>();
+					ht.put(key, Integer.toString(x));
+					SNMP snmp = new SNMP("1",ne.community,"1","RESPONSE", ht);
+					oos.writeObject(snmp);
+					oos.close();
+				}
+				
+			}
+			else if(snmp.pdutype.equalsIgnoreCase("SET")){
+				if(ne.tcpMIB.get(key) != null){
+					try{
+						ne.tcpMIB.put(key, Integer.parseInt(value));
+					} catch (NumberFormatException n){
+						Hashtable<String,String> ht = new Hashtable<String,String>();
+						ht.put(key, "Error inputing new value");
+						SNMP snmp = new SNMP("1",ne.community,"1","RESPONSE", ht);
+						oos.writeObject(snmp);
+						oos.close();
+					}
+					
+					int x = ne.tcpMIB.get(key);
+					
+					//Create new SNMP object;
+					Hashtable<String,String> ht = new Hashtable<String,String>();
+					ht.put(key, Integer.toString(x));
+					SNMP snmp = new SNMP("1",ne.community,"1","RESPONSE", ht);
+					oos.writeObject(snmp);
+					oos.close();
+				}
+				
+			}
+			socket.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 }
+
 class EventGenerator extends Thread{
 	NetworkElement ne;
 	public EventGenerator(NetworkElement ne){
@@ -153,6 +202,23 @@ class EventGenerator extends Thread{
 			ne.tcpMIB.put("1.3.6.1.2.1.6.12",  rand.nextInt(100));	// tcpRetransSegs
 			ne.tcpMIB.put("1.3.6.1.2.1.6.14",  rand.nextInt(100)); 	// tcpInErrs
 			ne.tcpMIB.put("1.3.6.1.2.1.6.15",  rand.nextInt(100)); 	// tcpOutRsts
+			
+			
+			ne.tcpMIB.put("1.3.6.1.2.1.6.5", rand.nextInt(10)); 	// tcpActiveOpens
+			ne.tcpMIB.put("1.3.6.1.2.1.6.6", rand.nextInt(10)); 	// tcpPassiveOpens
+			ne.tcpMIB.put("1.3.6.1.2.1.6.7", rand.nextInt(10)); 	// tcpAttemptFails
+			ne.tcpMIB.put("1.3.6.1.2.1.6.8", rand.nextInt(10)); 	// tcpEstabResets
+			ne.tcpMIB.put("1.3.6.1.2.1.6.9", rand.nextInt(10)); 	// tcpCurrEstab
+			ne.tcpMIB.put("1.3.6.1.2.1.6.10", rand.nextInt(10)); 	// tcpInSegs
+			ne.tcpMIB.put("1.3.6.1.2.1.6.11", rand.nextInt(10)); 	// tcpOutSegs
+			ne.tcpMIB.put("1.3.6.1.2.1.6.12", rand.nextInt(10));	// tcpRetransSegs
+			ne.tcpMIB.put("1.3.6.1.2.1.6.14", rand.nextInt(10)); 	// tcpInErrs
+			ne.tcpMIB.put("1.3.6.1.2.1.6.15", rand.nextInt(10)); 	// tcpOutRsts
+			
+			
+			
+			
+			
 		}
 	}
 }
@@ -173,7 +239,7 @@ class AlarmMonitor extends Thread{
 				e.printStackTrace();
 			}
 			int value = ne.tcpMIB.get((String)a.alarmVariable);
-			System.out.println(value);
+			//System.out.println(value);
 			if(value > a.alarmRisingThreshold){
 				System.out.println(a.alarmVariable + " Threshold Breached!!!!");
 				RMONEvent d = new RMONEvent(ne.events.size(), a.alarmVariable+" is above threshold",3,ne.community,0,ne.id,1);
@@ -202,7 +268,7 @@ class AlarmMonitor extends Thread{
 					socket.close();
 				} catch (UnknownHostException e) {
 					// TODO Auto-generated catch block
-					System.out.println("Unknown host");
+					//System.out.println("Unknown host");
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
