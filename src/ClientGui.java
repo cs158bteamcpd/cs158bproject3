@@ -92,6 +92,9 @@ public class ClientGui extends JPanel implements ActionListener{
 					snmp = new SNMP("1", textFieldCommStr.getText(), "1",
 							"GET", ht);
 					
+					//setting the flag to true to get events
+					snmp.setFlag();
+					
 					// get the RMONevent response
 					ArrayList<RMONEvent> response = (ArrayList<RMONEvent>) ois.readObject();
 
