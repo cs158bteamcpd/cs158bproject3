@@ -32,6 +32,12 @@ public class TCPServer extends Thread{
 	    		SNMP obj = (SNMP)ois.readObject();
 	    		if(obj.pdutype.equalsIgnoreCase("TRAP"))
 	    		snmp.add(obj);
+	    		if(obj.pdutype.equalsIgnoreCase("SET"))
+	    		{
+	    			Socket ss = new Socket("host", port);
+	    			ObjectOutputStream set = new ObjectOutputStream(ss.getOutputStream());
+	    			set.writeObject(obj);
+	    		}
 	    		if(obj.pdutype.equalsIgnoreCase("GET"))
 	    		{
 	    			ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
