@@ -27,7 +27,8 @@ public class ClientGui extends JPanel implements ActionListener{
 	private ObjectOutputStream oos;
 	private ObjectInputStream ois;
 	
-	//protected JTextField textField;
+	protected JTextField textFieldHost;
+	protected JTextField textFieldPort;
 	protected JTextField textFieldOID;
 	protected JTextField textFieldCommStr;
     protected JTextArea textArea;
@@ -59,6 +60,14 @@ public class ClientGui extends JPanel implements ActionListener{
 		super(new GridBagLayout());
 		 
 		//created new textfield
+        textFieldHost = new JTextField(20);
+        textFieldHost.setToolTipText("HostID goes here!");
+		
+        //created new textfield
+        textFieldPort = new JTextField(20);
+        textFieldPort.setToolTipText("Port goes here!");
+		
+		//created new textfield
         textFieldOID = new JTextField(20);
         textFieldOID.setToolTipText("OID goes here!");
         //textField.addActionListener(this); //attach listener
@@ -82,7 +91,9 @@ public class ClientGui extends JPanel implements ActionListener{
 					// Socket s = new Socket("localhost", 9999);// host, port
 					if (s == null) 
 					{
-						s = new Socket("localhost", 9999);// host, port
+						//s = new Socket("localhost", 9999);// host, port
+						s = new Socket(textFieldHost.getText(), Integer.parseInt(textFieldPort.getText()));// host, port
+
 					}
 
 					Hashtable<String, String> ht = new Hashtable<String, String>();
@@ -153,6 +164,16 @@ public class ClientGui extends JPanel implements ActionListener{
         GridBagConstraints c = new GridBagConstraints();
         c.gridwidth = GridBagConstraints.REMAINDER;
  
+        //Host
+        add(new JLabel("Host ")); //add label for OID
+        c.fill = GridBagConstraints.HORIZONTAL;
+        add(textFieldHost, c); //Host textfield
+        
+        //Port
+        add(new JLabel("Port ")); //add label for OID
+        c.fill = GridBagConstraints.HORIZONTAL;
+        add(textFieldPort, c); //Port textfield
+        
         //OID
         add(new JLabel("OID ")); //add label for OID
         c.fill = GridBagConstraints.HORIZONTAL;
@@ -262,7 +283,8 @@ public class ClientGui extends JPanel implements ActionListener{
 			//Socket s = new Socket("localhost", 9999);// host, port
 			if (s == null)
 			{
-				s = new Socket("localhost", 9999);// host, port
+				//s = new Socket("localhost", 9999);// host, port
+				s = new Socket(textFieldHost.getText(), Integer.parseInt(textFieldPort.getText()));// host, port
 			}
 			
 			
