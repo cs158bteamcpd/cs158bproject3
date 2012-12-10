@@ -7,6 +7,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Hashtable;
 
 import javax.swing.*;
@@ -22,6 +23,10 @@ import javax.swing.*;
  */
 public class ClientGui extends JPanel implements ActionListener{
 
+	private Socket s;
+	private ObjectOutputStream oos;
+	private ObjectInputStream ois;
+	
 	//protected JTextField textField;
 	protected JTextField textFieldOID;
 	protected JTextField textFieldCommStr;
@@ -67,6 +72,57 @@ public class ClientGui extends JPanel implements ActionListener{
         b.setToolTipText("Click to submit");
         b.addActionListener(this); //add action listener to this button
         
+        //create button alarm
+        JButton getAlarmButton = new JButton("Get Alarms");
+        getAlarmButton.setToolTipText("Press to get RMON Alarms");
+        getAlarmButton.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent evt)
+            {
+				try {
+					// Socket s = new Socket("localhost", 9999);// host, port
+					if (s == null) 
+					{
+						s = new Socket("localhost", 9999);// host, port
+					}
+
+					Hashtable<String, String> ht = new Hashtable<String, String>();
+
+					ht.put(textFieldOID.getText(), textFieldOID.getText());
+
+					snmp = new SNMP("1", textFieldCommStr.getText(), "1",
+							"GET", ht);
+					
+					// get the RMONevent response
+					ArrayList<RMONEvent> response = (ArrayList<RMONEvent>) ois.readObject();
+
+					for (int i = 0; i < response.size(); i++)
+					{
+						//System.out.println(response.vBinding.get(OID));
+						textArea.append(response.get(i).toString() + newline);
+						textArea.setCaretPosition(textArea.getDocument().getLength());
+					}
+			        
+
+				} catch (UnknownHostException e) {
+					// TODO Auto-generated catch block
+					// System.out.println("Unknown Host");
+					textArea.append("Unknown Host" + newline);
+					textArea.setCaretPosition(textArea.getDocument()
+							.getLength());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					// System.out.println("Error retreving data");
+					textArea.append("Error retreving data" + newline);
+					textArea.setCaretPosition(textArea.getDocument()
+							.getLength());
+				} catch (ClassNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+			}
+		});
+
         //create new text area
         textArea = new JTextArea(5, 20);
         textArea.setEditable(false);
@@ -79,7 +135,7 @@ public class ClientGui extends JPanel implements ActionListener{
         comboBoxMethods = new JComboBox(methodStr);
         comboBoxMethods.setToolTipText("Choose GET or SET method");
         comboBoxMethods.setSelectedIndex(0);
-        //add listner to combobox
+        //add listener to combobox
         comboBoxMethods.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e)
             {
@@ -145,11 +201,6 @@ public class ClientGui extends JPanel implements ActionListener{
      */
     private static void createAndShowPopUp() 
     {
-    	
-        
-    	
-    	//-----------------------
-    	
     	//Create and set up the window.
         final JFrame frame = new JFrame("SET Method");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -203,8 +254,14 @@ public class ClientGui extends JPanel implements ActionListener{
 		String methodGetOrSet = (String) comboBoxMethods.getSelectedItem();
 		
 		try {
-			Socket s = new Socket("localhost", 9999);// host, port
-
+			
+			//Socket s = new Socket("localhost", 9999);// host, port
+			if (s == null)
+			{
+				s = new Socket("localhost", 9999);// host, port
+			}
+			
+			
 			if(methodGetOrSet.equalsIgnoreCase("get"))
 			{
 				Hashtable<String,String> ht = new Hashtable<String,String>();
@@ -224,13 +281,20 @@ public class ClientGui extends JPanel implements ActionListener{
 				
 			}
 			
-			//create the OutputStream to write
-			ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
-			//write the SNMP object to server
+			
+			if (oos == null) //if it's not open
+			{
+				// create the OutputStream to write
+				oos = new ObjectOutputStream(s.getOutputStream());
+			}
+			// write the SNMP object to server
 			oos.writeObject(snmp);
 
-			// Now Wait for response
-			ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
+			if (ois == null) //if it's not open
+			{
+				// Now Wait for response
+				ois = new ObjectInputStream(s.getInputStream());
+			}
 			// get the SNMP response
 			SNMP response = (SNMP) ois.readObject();
 

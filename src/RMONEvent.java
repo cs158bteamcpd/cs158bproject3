@@ -18,4 +18,13 @@ public class RMONEvent {
     	this.eventStatus = eventStatus;
     }
     
+    public String toString()
+    {
+    	return "Index: " + this.eventIndex + " Description: " 
+    			+ this.eventDescription + " Type: " + this.eventType 
+    			+ " Community: " + this.eventCommunity 
+    			+ " Last Time Sent: " + this.eventLastTimeSent 
+    			+ " Owner: " + this.eventOwner 
+    			+ " Status: " + this.eventStatus; 
+    }
 }
