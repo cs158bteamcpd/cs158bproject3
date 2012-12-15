@@ -84,7 +84,7 @@ public class ClientGui extends JPanel implements ActionListener{
         
         //create button alarm
         JButton getAlarmButton = new JButton("Get Alarms");
-        getAlarmButton.setToolTipText("Press to get RMON Alarms");
+        getAlarmButton.setToolTipText("Press to get RMON Alarms"); //To be honest this should be setting the trap and then the alarms come in...
         getAlarmButton.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent evt)
             {
@@ -146,7 +146,21 @@ public class ClientGui extends JPanel implements ActionListener{
 			}
 		});
 
-                
+        //create button Enable/Disable SNMP
+        JButton snmpEnableDisableButton = new JButton("Enable/Disable SNMP Agent");
+        snmpEnableDisableButton.setToolTipText("Press to enable/disable SNMP agent (Default: SNMP agent enabled)");        
+        snmpEnableDisableButton.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent evt)
+            {
+
+				// System.out.println(response.vBinding.get(OID));
+				// textAreaAlarm.append(response.get(i).toString() + newline);
+        		textArea.append("SNMP ENABLED/DISABLED MESSAGE HERE" + newline);
+				textArea.setCaretPosition(textArea.getDocument().getLength());
+
+			}
+		});
+        
         //create new text area
         textArea = new JTextArea(5, 20);
         textArea.setEditable(false);
@@ -221,9 +235,24 @@ public class ClientGui extends JPanel implements ActionListener{
         c.fill = GridBagConstraints.HORIZONTAL;
         add(comboBoxMethods, c); //combo box selection
                 
-        //add buttons, submit, get alarm
-        add(b, c);
-        add(getAlarmButton, c);
+        //JPanel for buttons
+        JPanel buttonPane = new JPanel();
+        buttonPane.setLayout(new BoxLayout(buttonPane, BoxLayout.LINE_AXIS));
+        buttonPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        buttonPane.add(Box.createHorizontalGlue());
+        buttonPane.add(b);
+        buttonPane.add(Box.createRigidArea(new Dimension(10, 0)));
+        buttonPane.add(getAlarmButton);
+        buttonPane.add(Box.createRigidArea(new Dimension(10, 0)));
+        buttonPane.add(snmpEnableDisableButton);
+        //add the button panel
+        add(buttonPane, c);
+        
+        //add buttons, submit, get alarm, snmp EnableDisable
+        //add(b, c);
+        //add(getAlarmButton, c);
+        //add(snmpEnableDisableButton, c);
+        
         
         //add Output scrollPane
         c.fill = GridBagConstraints.BOTH;
@@ -265,7 +294,7 @@ public class ClientGui extends JPanel implements ActionListener{
     {
     	//Create and set up the window.
         final JFrame frame = new JFrame("SET Method");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         
         
         //got my jpanel
@@ -307,6 +336,7 @@ public class ClientGui extends JPanel implements ActionListener{
         //frame.setSize(400, 400);
         frame.setLocationRelativeTo(null); //this makes the window appear at the center
         frame.setVisible(true);
+
     }
 
     /**
