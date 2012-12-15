@@ -253,7 +253,7 @@ public class ClientGui extends JPanel implements ActionListener{
  
         //Display the window.
         //frame.pack(); // this packs all the components in the frame
-        frame.setSize(400, 400);
+        frame.setSize(600, 480);
         frame.setLocationRelativeTo(null); //this makes the window appear at the center
         frame.setVisible(true);
     }
