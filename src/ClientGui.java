@@ -32,6 +32,7 @@ public class ClientGui extends JPanel implements ActionListener{
 	protected JTextField textFieldOID;
 	protected JTextField textFieldCommStr;
     protected JTextArea textArea;
+    protected JTextArea textAreaAlarm;
     protected JComboBox comboBoxMethods;
     protected static JTextField textFieldSet;
     private SNMP snmp = null;
@@ -120,22 +121,22 @@ public class ClientGui extends JPanel implements ActionListener{
 					for (int i = 0; i < response.size(); i++)
 					{
 						//System.out.println(response.vBinding.get(OID));
-						textArea.append(response.get(i).toString() + newline);
-						textArea.setCaretPosition(textArea.getDocument().getLength());
+						textAreaAlarm.append(response.get(i).toString() + newline);
+						textAreaAlarm.setCaretPosition(textAreaAlarm.getDocument().getLength());
 					}
 			        
 
 				} catch (UnknownHostException e) {
 					// TODO Auto-generated catch block
 					// System.out.println("Unknown Host");
-					textArea.append("Unknown Host" + newline);
-					textArea.setCaretPosition(textArea.getDocument()
+					textAreaAlarm.append("Unknown Host" + newline);
+					textAreaAlarm.setCaretPosition(textAreaAlarm.getDocument()
 							.getLength());
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					// System.out.println("Error retreving data");
-					textArea.append("Error retreving data" + newline);
-					textArea.setCaretPosition(textArea.getDocument()
+					textAreaAlarm.append("Error retreving data" + newline);
+					textAreaAlarm.setCaretPosition(textAreaAlarm.getDocument()
 							.getLength());
 				} catch (ClassNotFoundException e) {
 					// TODO Auto-generated catch block
@@ -145,11 +146,34 @@ public class ClientGui extends JPanel implements ActionListener{
 			}
 		});
 
+                
         //create new text area
         textArea = new JTextArea(5, 20);
         textArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(textArea);
  
+        //create new text area for alarms
+        textAreaAlarm = new JTextArea(5,20);
+        textArea.setEditable(false);
+        JScrollPane scrollPaneAlarm = new JScrollPane(textAreaAlarm);
+        
+        /*Tabbed Output Area*/
+        JTabbedPane tabbedPane = new JTabbedPane();
+         
+        //JComponent panel1 = makeTextPanel("Output Console");
+        tabbedPane.addTab("Output Console", null, scrollPane,
+                "Output Console");
+        tabbedPane.setMnemonicAt(0, KeyEvent.VK_1);
+         
+        //JComponent panel2 = makeTextPanel("Alarms");
+        tabbedPane.addTab("Alarms", null, scrollPaneAlarm,
+                "Output Alarm Console");
+        tabbedPane.setMnemonicAt(1, KeyEvent.VK_2);
+         
+        //The following line enables to use scrolling tabs.
+        tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        
+        
         //create combobox, for get and set
         String[] methodStr = { "GET", "SET" };
         //Create the combo box, select the item at index 4.
@@ -201,11 +225,16 @@ public class ClientGui extends JPanel implements ActionListener{
         add(b, c);
         add(getAlarmButton, c);
         
-        
+        //add Output scrollPane
         c.fill = GridBagConstraints.BOTH;
         c.weightx = 1.0;
         c.weighty = 1.0;
-        add(scrollPane, c);
+        //add(scrollPane, c);
+        
+        //add(new JLabel("Tabbed Pane"));
+        //c.fill = GridBagConstraints.HORIZONTAL;
+        //Add the tabbed pane to this panel.
+        add(tabbedPane, c);
 	}
 
 	/**
@@ -280,6 +309,21 @@ public class ClientGui extends JPanel implements ActionListener{
         frame.setVisible(true);
     }
 
+    /**
+     * 
+     * @param text
+     * @return
+     */
+    public JComponent makeTextPanel(String text) {
+        JPanel panel = new JPanel(false);
+        JLabel filler = new JLabel(text);
+        filler.setHorizontalAlignment(JLabel.CENTER);
+        panel.setLayout(new GridLayout(1, 1));
+        panel.add(filler);
+        return panel;
+    }
+    
+    
 	@Override
 	public void actionPerformed(ActionEvent evt) {
 		String OID = textFieldOID.getText();
