@@ -227,6 +227,7 @@ class EventGenerator extends Thread{
 class AlarmMonitor extends Thread{
 	NetworkElement ne;
 	RMONAlarm a;
+	private int time;
 	public AlarmMonitor(NetworkElement ne, RMONAlarm a){
 		this.ne = ne;
 		this.a = a;
@@ -241,8 +242,9 @@ class AlarmMonitor extends Thread{
 			int value = ne.tcpMIB.get((String)a.alarmVariable);
 			//System.out.println(value);
 			if(value > a.alarmRisingThreshold){
+				time++;
 				System.out.println(a.alarmVariable + " Threshold Breached!!!!");
-				RMONEvent d = new RMONEvent(ne.events.size(), a.alarmVariable+" is above threshold",3,ne.community,0,ne.id,1);
+				RMONEvent d = new RMONEvent(ne.events.size(), a.alarmVariable+" is above threshold",3,ne.community,time,ne.id,1);
 				ne.events.add(d);
 				
 				//Send trap!!!!!!

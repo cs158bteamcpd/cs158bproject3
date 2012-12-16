@@ -9,6 +9,7 @@ public class SNMP implements Serializable
 	public Hashtable<String,String> vBinding; // the variable binding, OID and value of MIB object
 	public String pdutype = "RESPONSE";
 	public Boolean flag = false;
+	public String status="ON";
 	private String community; // the community string
 
 	private String host; // the host ID
@@ -69,6 +70,10 @@ public class SNMP implements Serializable
 	public void setFlag()
 	{
 		flag = true;
+	}
+	public void setStatus(String s)
+	{
+		status=s;
 	}
 	//missing snmp traps
 }

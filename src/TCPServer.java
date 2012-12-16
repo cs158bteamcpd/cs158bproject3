@@ -8,6 +8,8 @@ public class TCPServer extends Thread{
 	private static ArrayList<RMONEvent> rMonEvent;
     
     private ServerSocket s;
+
+	private boolean Status = false;
     private static int neport=9000;
     private static final int cport = 9005;
     public TCPServer(ServerSocket s,ArrayList<RMONEvent> rMonEvent){
@@ -29,10 +31,11 @@ public class TCPServer extends Thread{
 	    			rMonEvent.add(new RMONEvent(Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.1")), vBinding.get("1.3.6.1.2.1.16.9.1.1.2"),
 	    			Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.3")), vBinding.get("1.3.6.1.2.1.16.9.1.1.4"), Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.5")),
 	    			vBinding.get("1.3.6.1.2.1.16.9.1.1.6"), Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.7"))));
-	    			System.out.println(rMonEvent.toString());
+	    			//System.out.println(rMonEvent.toString());
 	    		}
 	    		else if(obj.pdutype.equalsIgnoreCase("GET"))
 	    		{
+	    			CheckStatus(socket);
 	    			if(obj.flag)
 	    			{
 	    			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
@@ -61,6 +64,13 @@ public class TCPServer extends Thread{
 	    		}
 	    		else if(obj.pdutype.equalsIgnoreCase("SET"))
 	    		{
+	    			if(obj.status.equalsIgnoreCase("OFF")&&!Status)
+	    			{
+	    				Status = true;
+	    				CheckStatus(socket);
+	    			}
+	    			else
+	    				Status = false;
 	    			Socket ss = new Socket("localhost", 9001);
 	    			ObjectOutputStream set = new ObjectOutputStream(ss.getOutputStream());
 	    			set.flush();
@@ -75,10 +85,10 @@ public class TCPServer extends Thread{
 	    			set.close();
 	    			ss.close();
 	    		}
-	    		count++;
-	    		System.out.println("PDU TYPE: " +obj.pdutype);
-	    		System.out.println(s.isClosed());
-	    		System.out.println(count);
+	    		//count++;
+	    		//System.out.println("PDU TYPE: " +obj.pdutype);
+	    		//System.out.println(s.isClosed());
+	    		//System.out.println(count);
 	    		is.close();
 	    		ois.close();
 
@@ -91,6 +101,29 @@ public class TCPServer extends Thread{
     	
     }
     
+	private void CheckStatus(Socket socket) throws ClassNotFoundException, IOException {
+		InputStream is = null;
+		try {
+			is = socket.getInputStream();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if(Status)
+		{
+			ObjectInputStream ois = new ObjectInputStream(is);  
+			SNMP obj = (SNMP)ois.readObject();
+			Socket ss = new Socket("localhost", 9001);
+			ObjectOutputStream set = new ObjectOutputStream(ss.getOutputStream());
+			set.flush();
+			set.writeObject("SNMP Disabled");
+			set.flush();
+			set.close();
+			ss.close();
+		}
+		else
+			return;
+	}
 	public static void main(String[] args) throws IOException
     {
     	ArrayList<RMONEvent> rmon = new ArrayList<RMONEvent>();
