@@ -4,7 +4,7 @@ import javax.swing.*;
 import javax.swing.tree.*;
 import javax.swing.event.*;
 
-public class MibBrowser extends JPanel implements TreeSelectionListener {
+public class MibBrowser extends JPanel {//implements TreeSelectionListener {
 	
 	private JTree tree;
 	private JTextField currentSelectionField;
@@ -13,7 +13,7 @@ public class MibBrowser extends JPanel implements TreeSelectionListener {
 	{		
 		super(new GridBagLayout());
 		
-		DefaultMutableTreeNode root = new DefaultMutableTreeNode("mib-2 - 1.3.6.1.2.1");
+		DefaultMutableTreeNode root = new DefaultMutableTreeNode("mib2 - 1.3.6.1.2.1");
 		DefaultMutableTreeNode child;
 		DefaultMutableTreeNode grandChild;
 		
@@ -72,7 +72,7 @@ public class MibBrowser extends JPanel implements TreeSelectionListener {
 		
 		tree = new JTree(root);
 		//add tree selection listener
-		tree.addTreeSelectionListener(this);
+		//tree.addTreeSelectionListener(this);
 		
 		//Add Components to this panel.
         GridBagConstraints c = new GridBagConstraints();
@@ -87,6 +87,11 @@ public class MibBrowser extends JPanel implements TreeSelectionListener {
 		add(treePane, c);
 		currentSelectionField = new JTextField("Current Selection: NONE");
 		add(currentSelectionField, c);
+	}
+	
+	public JTree getTree()
+	{
+		return tree;
 	}
 
 	public void valueChanged(TreeSelectionEvent event) {

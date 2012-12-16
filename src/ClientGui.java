@@ -13,6 +13,8 @@ import java.util.Hashtable;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
@@ -33,7 +35,7 @@ public class ClientGui extends JPanel implements ActionListener{
 
 	protected JTextField textFieldHost;
 	protected JTextField textFieldPort;
-	protected JTextField textFieldOID;
+	protected static JTextField textFieldOID;
 	protected JTextField textFieldCommStr;
     protected JTextArea textArea;
     protected JTextArea textAreaAlarm;
@@ -287,8 +289,19 @@ public class ClientGui extends JPanel implements ActionListener{
         JFrame frame = new JFrame("Client Gui");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
+        final MibBrowser mibBrowser = new MibBrowser();
+        mibBrowser.getTree().addTreeSelectionListener(new TreeSelectionListener() {
+				public void valueChanged(TreeSelectionEvent e) 
+				{
+					String[] OID = mibBrowser.getTree().getLastSelectedPathComponent()
+							.toString().split("-");
+					
+					textFieldOID.setText( OID[1].trim() );
+				}
+		});
+        
         JSplitPane clientguiPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-        		new MibBrowser(), new ClientGui());
+        		mibBrowser, new ClientGui());
         
         //frame.add(new MibBrowser(), BorderLayout.WEST);
         //Add contents to the window.
