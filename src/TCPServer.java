@@ -19,21 +19,21 @@ public class TCPServer extends Thread{
     public void run()
     {
     	try {
-    		int count =0;
     		while(!s.isClosed()){
     			Socket socket = s.accept();
     			InputStream is = socket.getInputStream();
     			ObjectInputStream ois = new ObjectInputStream(is);  
     			SNMP obj = (SNMP)ois.readObject();
-	    		if(obj.pdutype.equalsIgnoreCase("TRAP"))
+	    		if(obj.pdutype.equalsIgnoreCase("TRAP")&& CheckCommunity(obj.getCommunity()) > 0)
 	    		{
+	    			CheckStatus(socket);
 	    			Hashtable<String,String> vBinding = obj.getvBinding();
 	    			rMonEvent.add(new RMONEvent(Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.1")), vBinding.get("1.3.6.1.2.1.16.9.1.1.2"),
 	    			Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.3")), vBinding.get("1.3.6.1.2.1.16.9.1.1.4"), Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.5")),
 	    			vBinding.get("1.3.6.1.2.1.16.9.1.1.6"), Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.7"))));
 	    			//System.out.println(rMonEvent.toString());
 	    		}
-	    		else if(obj.pdutype.equalsIgnoreCase("GET"))
+	    		else if(obj.pdutype.equalsIgnoreCase("GET")&&CheckCommunity(obj.getCommunity())>=0)
 	    		{
 	    			CheckStatus(socket);
 	    			if(obj.flag)
@@ -49,6 +49,7 @@ public class TCPServer extends Thread{
 	    				Socket ss= new Socket("localhost", 9001);
 	    				ObjectOutputStream get = new ObjectOutputStream(ss.getOutputStream());
 	    				get.flush();
+	    				obj.setCommunity("password");
 	    				get.writeObject(obj);
 	    				ObjectInputStream ois1 = new ObjectInputStream(ss.getInputStream());   
 	    			 	SNMP response = (SNMP)ois1.readObject();
@@ -62,18 +63,27 @@ public class TCPServer extends Thread{
 	    			 	ss.close();
 	    			}
 	    		}
-	    		else if(obj.pdutype.equalsIgnoreCase("SET"))
+	    		else if(obj.pdutype.equalsIgnoreCase("SET")&& CheckCommunity(obj.getCommunity())>0)
 	    		{
-	    			if(obj.status.equalsIgnoreCase("OFF")&&!Status)
+	    			if(obj.status.equalsIgnoreCase("OFF")&&(obj.flag))
 	    			{
 	    				Status = true;
 	    				CheckStatus(socket);
 	    			}
-	    			else
+	    			else if(obj.status.equalsIgnoreCase("ON")&&(obj.flag)){
 	    				Status = false;
+	    				Socket ss = new Socket("localhost", 9001);
+	    				ObjectOutputStream set = new ObjectOutputStream(ss.getOutputStream());
+	    				set.flush();
+	    				set.writeObject("SNMP Agent enabled");
+	    				set.flush();
+	    				set.close();
+	    				ss.close();
+	    			}
 	    			Socket ss = new Socket("localhost", 9001);
 	    			ObjectOutputStream set = new ObjectOutputStream(ss.getOutputStream());
 	    			set.flush();
+	    			obj.setCommunity("password");
 	    			set.writeObject(obj);
 	    			set.flush();
 	    			ObjectInputStream in = new ObjectInputStream(ss.getInputStream());
@@ -101,25 +111,18 @@ public class TCPServer extends Thread{
     	
     }
     
+	private int CheckCommunity(String community) {
+		
+		return 0;
+	}
 	private void CheckStatus(Socket socket) throws ClassNotFoundException, IOException {
-		InputStream is = null;
-		try {
-			is = socket.getInputStream();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		if(Status)
 		{
-			ObjectInputStream ois = new ObjectInputStream(is);  
-			SNMP obj = (SNMP)ois.readObject();
-			Socket ss = new Socket("localhost", 9001);
-			ObjectOutputStream set = new ObjectOutputStream(ss.getOutputStream());
+			ObjectOutputStream set = new ObjectOutputStream(socket.getOutputStream());
 			set.flush();
-			set.writeObject("SNMP Disabled");
+			set.writeObject("SNMP Agent Disabled");
 			set.flush();
 			set.close();
-			ss.close();
 		}
 		else
 			return;
