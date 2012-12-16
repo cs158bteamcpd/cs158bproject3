@@ -41,12 +41,12 @@ public class ClientGui extends JPanel implements ActionListener{
     protected JTextArea textAreaAlarm;
     protected JComboBox comboBoxMethods;
     protected static JTextField textFieldSet;
-    private SNMP snmp = null;
+    private SNMP snmp = new SNMP();//empty SNMP Object
     
     private static MyTableModel aclTable = new MyTableModel();
 
     
-    private int snmpAgentStatus; // For the Enable/Disable button snmpAgent disable and enable
+    private String snmpAgentStatus = "ON"; // For the Enable/Disable button snmpAgent disable and enable
     							 // Status: 0, snmpAgent Enabled
     							 // Status: 1, snmpAgent Disabled
     
@@ -102,34 +102,53 @@ public class ClientGui extends JPanel implements ActionListener{
         	public void actionPerformed(ActionEvent evt)
             {
 				try {
-					Socket s = new Socket(textFieldHost.getText(), Integer.parseInt(textFieldPort.getText()));// host, port
+					// check HOST and PORT first
+					if (!(textFieldHost.getText().equals("")
+							|| textFieldPort.getText().equals("") || textFieldCommStr
+							.getText().equals(""))) {
 
-					Hashtable<String, String> ht = new Hashtable<String, String>();
+						Socket s = new Socket(textFieldHost.getText(), Integer
+								.parseInt(textFieldPort.getText()));// host,
+																	// port
 
-					ht.put(textFieldOID.getText(), textFieldOID.getText());
+						Hashtable<String, String> ht = new Hashtable<String, String>();
 
-					snmp = new SNMP("1", textFieldCommStr.getText(), "1",
-							"GET", ht);
+						ht.put(textFieldOID.getText(), textFieldOID.getText());
 
-					//setting the flag to true to get events
-					snmp.setFlag();
+						snmp = new SNMP("1", textFieldCommStr.getText(), "1",
+								"GET", ht);
 
-					//create the OutputStream to write
-					ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
-					//write the SNMP object to server
-					oos.writeObject(snmp);
+						// setting the flag to true to get events
+						snmp.setFlag();
+						snmp.setStatus(snmpAgentStatus);
 
-					// Now Wait for response
-					ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
+						// create the OutputStream to write
+						ObjectOutputStream oos = new ObjectOutputStream(s
+								.getOutputStream());
+						// write the SNMP object to server
+						oos.writeObject(snmp);
 
-					// get the RMONevent response
-					ArrayList<RMONEvent> response = (ArrayList<RMONEvent>) ois.readObject();
+						// Now Wait for response
+						ObjectInputStream ois = new ObjectInputStream(s
+								.getInputStream());
 
-					for (int i = 0; i < response.size(); i++)
-					{
-						//System.out.println(response.vBinding.get(OID));
-						textAreaAlarm.append(response.get(i).toString() + newline);
-						textAreaAlarm.setCaretPosition(textAreaAlarm.getDocument().getLength());
+						// get the RMONevent response
+						ArrayList<RMONEvent> response = (ArrayList<RMONEvent>) ois
+								.readObject();
+
+						for (int i = 0; i < response.size(); i++) {
+							// System.out.println(response.vBinding.get(OID));
+							textAreaAlarm.append(response.get(i).toString()
+									+ newline);
+							textAreaAlarm.setCaretPosition(textAreaAlarm
+									.getDocument().getLength());
+						}
+
+					} else {
+						textArea.append("Host, Port, or Community not entered."
+								+ newline);
+						textArea.setCaretPosition(textArea.getDocument()
+								.getLength());
 					}
 
 
@@ -160,10 +179,75 @@ public class ClientGui extends JPanel implements ActionListener{
         	public void actionPerformed(ActionEvent evt)
             {
 
-				// System.out.println(response.vBinding.get(OID));
-				// textAreaAlarm.append(response.get(i).toString() + newline);
-        		textArea.append("SNMP ENABLED/DISABLED MESSAGE HERE" + newline);
-				textArea.setCaretPosition(textArea.getDocument().getLength());
+				try {
+					
+					//check HOST and PORT first
+					if (!(textFieldHost.getText().equals("") 
+							|| textFieldPort.getText().equals(""))) 
+					{
+
+						Socket s = new Socket(textFieldHost.getText(), Integer
+								.parseInt(textFieldPort.getText()));
+						
+						Hashtable<String, String> ht = new Hashtable<String, String>();
+
+						ht.put(textFieldOID.getText(), textFieldOID.getText());
+
+						snmp = new SNMP("1", textFieldCommStr.getText(), "1",
+								"GET", ht);
+
+						snmp.setFlag();
+						// setting the SNMP Agent status, enable/disable
+						if (snmp.status.equalsIgnoreCase("ON")) {
+							// if on set off
+							snmp.setStatus("OFF");
+							snmpAgentStatus = snmp.status;
+						} else {
+							// otherwise turn on
+							snmp.setStatus("ON");
+							snmpAgentStatus = snmp.status;
+						}
+
+						// create the OutputStream to write
+						ObjectOutputStream oos = new ObjectOutputStream(s
+								.getOutputStream());
+						// write the SNMP object to server
+						oos.writeObject(snmp);
+
+						// Now Wait for response
+						ObjectInputStream ois = new ObjectInputStream(s
+								.getInputStream());
+					
+					
+						// System.out.println(response.vBinding.get(OID));
+						// textAreaAlarm.append(response.get(i).toString() +
+						// newline);
+						textArea.append("SNMP Agent " + ois.read()
+								+ newline);
+						textArea.setCaretPosition(textArea.getDocument()
+								.getLength());
+					}
+					else //socket not connected
+					{
+						textArea.append("Host or Port not entered."
+								+ newline);
+						textArea.setCaretPosition(textArea.getDocument()
+								.getLength());
+					}
+					
+				} catch (UnknownHostException e) {
+					// TODO Auto-generated catch block
+					// System.out.println("Unknown Host");
+					textArea.append("Unknown Host" + newline);
+					textArea.setCaretPosition(textAreaAlarm.getDocument()
+							.getLength());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					// System.out.println("Error retreving data");
+					textArea.append("Error retreving data" + newline);
+					textArea.setCaretPosition(textAreaAlarm.getDocument()
+							.getLength());
+				}
 
 			}
 		});
@@ -174,8 +258,21 @@ public class ClientGui extends JPanel implements ActionListener{
         modifyACLButton.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent evt)
             {
-        		//popping up another window
-        		createTableGUI();
+        		//check HOST and PORT first
+				if (!(textFieldHost.getText().equals("") 
+						|| textFieldPort.getText().equals("") 
+						|| textFieldCommStr.getText().equals("")) ) 
+				{
+					//popping up another window
+					createTableGUI();
+				}
+				else
+				{
+					textArea.append("Host, Port, Community not entered."
+							+ newline);
+					textArea.setCaretPosition(textArea.getDocument()
+							.getLength());
+				}
 			}
 		});
         
@@ -218,7 +315,8 @@ public class ClientGui extends JPanel implements ActionListener{
         comboBoxMethods.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e)
             {
-                if ( ((String) comboBoxMethods.getSelectedItem()).equalsIgnoreCase("set") )
+                if ( ((String) comboBoxMethods.getSelectedItem()).equalsIgnoreCase("set") 
+                		&& (snmpAgentStatus.equalsIgnoreCase("ON")))
                 {
                 	createAndShowPopUp();
                 }
@@ -347,9 +445,6 @@ public class ClientGui extends JPanel implements ActionListener{
 		        String columnName = model.getColumnName(column);
 		        Object data = model.getValueAt(row, column);
 
-		        //so retrieving data works...
-		        //System.out.println(model.getValueAt(row,column).toString());
-		        //but setting data doesnt....
 		        model.setValueAt(data, row, column);
 		        aclTable.fireTableCellUpdated(row, column);
 			}
@@ -445,47 +540,69 @@ public class ClientGui extends JPanel implements ActionListener{
 		String methodGetOrSet = (String) comboBoxMethods.getSelectedItem();
 
 		try {
-			System.out.println(textFieldHost.getText() + ":" + Integer.parseInt(textFieldPort.getText()));
 
-			Socket s = new Socket(textFieldHost.getText(), Integer.parseInt(textFieldPort.getText()));// host, port
+			// check HOST and PORT first
+			if (!(textFieldHost.getText().equals("")
+					|| textFieldPort.getText().equals("") || textFieldCommStr
+					.getText().equals(""))) {
 
-			if(methodGetOrSet.equalsIgnoreCase("get"))
-			{
-				Hashtable<String,String> ht = new Hashtable<String,String>();
+				System.out.println(textFieldHost.getText() + ":"
+						+ Integer.parseInt(textFieldPort.getText()));
 
-				ht.put(OID, OID);
+				Socket s = new Socket(textFieldHost.getText(),
+						Integer.parseInt(textFieldPort.getText()));// host, port
 
-				snmp = new SNMP("1",CommStr,"1","GET", ht);
-			} 
-			else 
-			{
+				if (methodGetOrSet.equalsIgnoreCase("get")) {
+					Hashtable<String, String> ht = new Hashtable<String, String>();
 
-				Hashtable<String,String> ht = new Hashtable<String,String>();
+					ht.put(OID, OID);
 
-				ht.put(OID, textFieldSet.getText());
+					snmp = new SNMP("1", CommStr, "1", "GET", ht);
+				} else {
 
-				snmp = new SNMP("1",CommStr,"1","SET", ht);
+					Hashtable<String, String> ht = new Hashtable<String, String>();
 
+					ht.put(OID, textFieldSet.getText());
+
+					snmp = new SNMP("1", CommStr, "1", "SET", ht);
+
+				}
+
+				// gotta do another check for snmpStatusAgent
+
+				if (snmpAgentStatus.equals("ON")) {
+					ObjectOutputStream oos = new ObjectOutputStream(
+							s.getOutputStream());
+
+					// write the SNMP object to server
+					oos.writeObject(snmp);
+					oos.flush();
+
+					ObjectInputStream ois = new ObjectInputStream(
+							s.getInputStream());
+
+					// get the SNMP response
+					SNMP response = (SNMP) ois.readObject();
+
+					// System.out.println(response.vBinding.get(OID));
+					textArea.append(response.vBinding.get(OID) + newline);
+
+					textArea.setCaretPosition(textArea.getDocument()
+							.getLength());
+				} else// we should be able to assume that the agent is disabled
+				{
+					textArea.append("SNMP Agent is " + snmpAgentStatus
+							+ newline);
+
+					textArea.setCaretPosition(textArea.getDocument()
+							.getLength());
+				}
+
+			} else {
+				textArea.append("Host, Port, Community not entered." + newline);
+				textArea.setCaretPosition(textArea.getDocument().getLength());
 			}
-
-
-			ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
-
-			// write the SNMP object to server
-			oos.writeObject(snmp);
-			oos.flush();
-
-			ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
-
-
-			// get the SNMP response
-			SNMP response = (SNMP) ois.readObject();
-
-			//System.out.println(response.vBinding.get(OID));
-			textArea.append(response.vBinding.get(OID) + newline);
-
-	        textArea.setCaretPosition(textArea.getDocument().getLength());
-
+			
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			//System.out.println("Unknown Host");
