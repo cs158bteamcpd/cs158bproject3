@@ -287,12 +287,18 @@ public class ClientGui extends JPanel implements ActionListener{
         JFrame frame = new JFrame("Client Gui");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
+        JSplitPane clientguiPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+        		new MibBrowser(), new ClientGui());
+        
+        //frame.add(new MibBrowser(), BorderLayout.WEST);
         //Add contents to the window.
-        frame.add(new ClientGui());
+        //frame.add(new ClientGui(), BorderLayout.CENTER);
+ 
+        frame.add(clientguiPane);
  
         //Display the window.
         //frame.pack(); // this packs all the components in the frame
-        frame.setSize(600, 480);
+        frame.setSize(920, 580);
         frame.setLocationRelativeTo(null); //this makes the window appear at the center
         frame.setVisible(true);
     }
