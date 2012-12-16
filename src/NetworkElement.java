@@ -14,8 +14,8 @@ import java.util.Random;
 
 
 public class NetworkElement{
-	String server = "localhost1";
-	int port = 9999;
+	String server = "localhost";
+	int port = 9000;
 	String id = "network-1";
 	String community = "password";
 	Hashtable<String, Integer> tcpMIB = new Hashtable<String, Integer>();
@@ -69,7 +69,7 @@ public class NetworkElement{
 		ne.addAlarm(1, "1.3.6.1.2.1.6.14", 70);
 		ne.startGenerator();
 		ne.startAlarmMonitor();
-		new CommunicationManager(9999,ne).start();
+		new CommunicationManager(9000,ne).start();
 	}
 	
 }
@@ -130,9 +130,9 @@ class SNMPInterperter extends Thread{
 		try {
 			OutputStream  os = socket.getOutputStream();
 			ObjectOutputStream oos = new ObjectOutputStream(os);  
-			Hashtable oid = snmp.vBinding;
+			Hashtable<?, ?> oid = snmp.vBinding;
 			
-			Enumeration e = oid.keys();
+			Enumeration<?> e = oid.keys();
 			String key = (String)e.nextElement();
 			String value = snmp.vBinding.get(key);
 			if(!(snmp. getCommunity().equalsIgnoreCase(ne.community))){
@@ -235,7 +235,6 @@ class AlarmMonitor extends Thread{
 			try {
 				Thread.sleep(a.alarmInterval * 1000);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			int value = ne.tcpMIB.get((String)a.alarmVariable);
@@ -263,7 +262,8 @@ class AlarmMonitor extends Thread{
 					
 					SNMP snmp = new SNMP("1",ne.community,"1","TRAP", ht);
 					oos.writeObject(snmp);
-					oos.close();
+					oos.flush();
+					//oos.close();
 					os.close();
 					socket.close();
 				} catch (UnknownHostException e) {

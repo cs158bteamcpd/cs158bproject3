@@ -1,3 +1,4 @@
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
@@ -15,7 +16,7 @@ import java.util.Hashtable;
 public class ClientTest {
 	public static void main(String[]args){
 		try {
-			Socket s = new Socket("localhost", 9000);
+			Socket s = new Socket("www.pwzone.net", 9000);
 			
 			SNMP snmp = null;
 			
@@ -60,18 +61,19 @@ public class ClientTest {
 			
 			ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
 			
-			
+
 			oos.writeObject(snmp);
-			
-			
+			oos.flush();
 			//Now Wait for response
 			
-			ObjectInputStream ois = new ObjectInputStream(s.getInputStream());	
+			ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
 			
+			//while(ois.available() <= 0){}
 			SNMP response = (SNMP)ois.readObject();
 			
 			System.out.println(response.vBinding.get(oid));
 			
+			s.close();
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			System.out.println("Unknown Host");

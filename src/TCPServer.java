@@ -1,116 +1,100 @@
 import java.net.*;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.Scanner;
 import java.io.*;
  
 public class TCPServer extends Thread{
 	
-	private ArrayList<RMONEvent> rMonEvent;
+	private static ArrayList<RMONEvent> rMonEvent;
     
-    private static Socket s;
-    private static int port=9999;
-    public TCPServer(Socket s,ArrayList<RMONEvent> rMonEvent){
-    	this.s = s;
-    	this.rMonEvent = rMonEvent;
+    private static ServerSocket s;
+    private static int neport=9000;
+    private static final int cport = 9005;
+    public TCPServer(ServerSocket s,ArrayList<RMONEvent> rMonEvent){
+    	TCPServer.s = s;
+    	TCPServer.rMonEvent = rMonEvent;
     }
     public void run()
     {
-    	// port = 9999; // Default Port
-    	// Allow changing the default port
-    	//if(args.length > 0)
-    		//port=Integer.parseInt(args[0]);
     	try {
-    		
-    	
-    		InputStream is = s.getInputStream();
-    		
-    		
+    		int count =0;
     		while(!s.isClosed()){
-	    		ObjectInputStream ois = new ObjectInputStream(is);  
-	    		SNMP obj = (SNMP)ois.readObject();
+    			Socket socket = s.accept();
+    			InputStream is = socket.getInputStream();
+    			ObjectInputStream ois = new ObjectInputStream(is);  
+    			SNMP obj = (SNMP)ois.readObject();
 	    		if(obj.pdutype.equalsIgnoreCase("TRAP"))
 	    		{
 	    			Hashtable<String,String> vBinding = obj.getvBinding();
 	    			rMonEvent.add(new RMONEvent(Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.1")), vBinding.get("1.3.6.1.2.1.16.9.1.1.2"),
-	    					Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.3")), vBinding.get("1.3.6.1.2.1.16.9.1.1.4"), Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.5")),
-	    					vBinding.get("1.3.6.1.2.1.16.9.1.1.6"), Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.7"))));
+	    			Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.3")), vBinding.get("1.3.6.1.2.1.16.9.1.1.4"), Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.5")),
+	    			vBinding.get("1.3.6.1.2.1.16.9.1.1.6"), Integer.parseInt(vBinding.get("1.3.6.1.2.1.16.9.1.1.7"))));
+	    			System.out.println(rMonEvent.toString());
 	    		}
-	    		if(obj.pdutype.equalsIgnoreCase("SET"))
-	    		{
-	    			Socket ss = new Socket("host", port);
-	    			ObjectOutputStream set = new ObjectOutputStream(ss.getOutputStream());
-	    			set.writeObject(obj);
-	    		}
-	    		if(obj.pdutype.equalsIgnoreCase("GET"))
+	    		else if(obj.pdutype.equalsIgnoreCase("GET"))
 	    		{
 	    			if(obj.flag)
 	    			{
-	    			ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
+	    			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+	    			oos.flush();
 	    			oos.writeObject(rMonEvent);
+	    			oos.flush();
+	    			oos.close();
 	    			}
 	    			else
 	    			{
-	    				Socket ss= new Socket("host", port);
+	    				Socket ss= new Socket("localhost", neport);
 	    				ObjectOutputStream get = new ObjectOutputStream(ss.getOutputStream());
+	    				get.flush();
 	    				get.writeObject(obj);
 	    				ObjectInputStream ois1 = new ObjectInputStream(ss.getInputStream());   
 	    			 	SNMP response = (SNMP)ois1.readObject();
-	    			 	ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
+	    			 	ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+	    			 	oos.flush();
 	    			 	oos.writeObject(response);
+	    			 	oos.flush();
+	    			 	oos.close();
+	    			 	get.flush();
+	    			 	get.close();
+	    			 	ss.close();
 	    			}
 	    		}
+	    		else if(obj.pdutype.equalsIgnoreCase("SET"))
+	    		{
+	    			Socket ss = new Socket("localhost", neport);
+	    			ObjectOutputStream set = new ObjectOutputStream(ss.getOutputStream());
+	    			set.flush();
+	    			set.writeObject(obj);
+	    			set.flush();
+	    			set.close();
+	    			ss.close();
+	    		}
+	    		count++;
 	    		System.out.println("PDU TYPE: " +obj.pdutype);
-	    		
-	    		
+	    		System.out.println(s.isClosed());
+	    		System.out.println(count);
+	    		is.close();
 	    		ois.close();
 
     		}
-    		is.close();  
-    		s.close();    
+    		//is.close();  
+    		//s.close();    
     		}catch(Exception e){
-    			e.printStackTrace();
+    			System.out.println(e.getMessage());
     		}
     	
     }
     
 	public static void main(String[] args) throws IOException
     {
-    	//Socket s = new Socket("localhost",port); 
     	ArrayList<RMONEvent> rmon = new ArrayList<RMONEvent>();
-    	ServerSocket ss = new ServerSocket(9000);
-    	while(true)
-    		new TCPServer(ss.accept(),rmon).start();   
-		
-    /*String command = "" ;
-    while (!command.equalsIgnoreCase("Exit"))
-    {
-    	Scanner in = new Scanner(System.in);
-    	command= in.nextLine();
-    	String [] cmd = command.split(" ");
-    	if(cmd[0].equalsIgnoreCase("show")&&cmd[1].equalsIgnoreCase("alarms"))
-    	{
-    		for (int i=0; i<snmp.size(); i++)
-    		{
-    			Enumeration<String> key = snmp.get(i).vBinding.keys();
-    			System.out.println(snmp.get(i).vBinding.get(key));
-    		}
-    	}
-    	if(cmd[0].equalsIgnoreCase("Show"))
-    	{
-    		for (int i=0; i<snmp.size(); i++)
-    		{
-    			if (snmp.get(i).vBinding.containsKey(cmd[1]))
-    			{
-    				System.out.println(snmp.get(i).vBinding.get(cmd[1]));
-    			}
-    		}
-    	}
+    	ServerSocket ness = new ServerSocket(neport);
+    	//ServerSocket cis = new ServerSocket(cport);
+    	TCPServer server = new TCPServer(ness, rmon);
+		server.start();
+    	while(!ness.isClosed());
+    	ness.close();
     	
     }
-    ss.close();
-    */
-}
 }
 
