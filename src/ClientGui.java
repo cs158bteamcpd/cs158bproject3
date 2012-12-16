@@ -23,6 +23,10 @@ import javax.swing.*;
  */
 public class ClientGui extends JPanel implements ActionListener{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 880349725426665681L;
 	private Socket s;
 	private ObjectOutputStream oos;
 	private ObjectInputStream ois;

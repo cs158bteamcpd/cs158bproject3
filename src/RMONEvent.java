@@ -25,6 +25,6 @@ public class RMONEvent {
     			+ " Community: " + this.eventCommunity 
     			+ " Last Time Sent: " + this.eventLastTimeSent 
     			+ " Owner: " + this.eventOwner 
-    			+ " Status: " + this.eventStatus; 
+    			+ " Status: " + this.eventStatus+"\n"; 
     }
 }
