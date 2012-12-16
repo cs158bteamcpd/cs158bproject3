@@ -1,5 +1,7 @@
+import java.io.Serializable;
 
-public class RMONEvent {
+
+public class RMONEvent implements Serializable{
 	int eventIndex;         
     String eventDescription;  
     int eventType; 
@@ -25,6 +27,6 @@ public class RMONEvent {
     			+ " Community: " + this.eventCommunity 
     			+ " Last Time Sent: " + this.eventLastTimeSent 
     			+ " Owner: " + this.eventOwner 
-    			+ " Status: " + this.eventStatus+"\n"; 
+    			+ " Status: " + this.eventStatus; 
     }
 }

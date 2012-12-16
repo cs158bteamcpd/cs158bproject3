@@ -27,14 +27,10 @@ import javax.swing.table.TableModel;
  */
 public class ClientGui extends JPanel implements ActionListener{
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 880349725426665681L;
 	private Socket s;
 	private ObjectOutputStream oos;
 	private ObjectInputStream ois;
-	
+
 	protected JTextField textFieldHost;
 	protected JTextField textFieldPort;
 	protected JTextField textFieldOID;
@@ -53,8 +49,8 @@ public class ClientGui extends JPanel implements ActionListener{
     							 // Status: 1, snmpAgent Disabled
     
     private final static String newline = "\n";
-	
-	
+
+
 	/**
 	 * Launch the application.
 	 */
@@ -74,15 +70,15 @@ public class ClientGui extends JPanel implements ActionListener{
 	 */
 	public ClientGui() {
 		super(new GridBagLayout());
-		 
+
 		//created new textfield
         textFieldHost = new JTextField(20);
         textFieldHost.setToolTipText("HostID goes here!");
-		
+
         //created new textfield
         textFieldPort = new JTextField(20);
         textFieldPort.setToolTipText("Port goes here!");
-		
+
 		//created new textfield
         textFieldOID = new JTextField(20);
         textFieldOID.setToolTipText("OID goes here!");
@@ -105,17 +101,17 @@ public class ClientGui extends JPanel implements ActionListener{
             {
 				try {
 					Socket s = new Socket(textFieldHost.getText(), Integer.parseInt(textFieldPort.getText()));// host, port
-					
+
 					Hashtable<String, String> ht = new Hashtable<String, String>();
 
 					ht.put(textFieldOID.getText(), textFieldOID.getText());
 
 					snmp = new SNMP("1", textFieldCommStr.getText(), "1",
 							"GET", ht);
-					
+
 					//setting the flag to true to get events
 					snmp.setFlag();
-					
+
 					//create the OutputStream to write
 					ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
 					//write the SNMP object to server
@@ -123,7 +119,7 @@ public class ClientGui extends JPanel implements ActionListener{
 
 					// Now Wait for response
 					ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
-					
+
 					// get the RMONevent response
 					ArrayList<RMONEvent> response = (ArrayList<RMONEvent>) ois.readObject();
 
@@ -133,7 +129,7 @@ public class ClientGui extends JPanel implements ActionListener{
 						textAreaAlarm.append(response.get(i).toString() + newline);
 						textAreaAlarm.setCaretPosition(textAreaAlarm.getDocument().getLength());
 					}
-			        
+
 
 				} catch (UnknownHostException e) {
 					// TODO Auto-generated catch block
@@ -291,18 +287,12 @@ public class ClientGui extends JPanel implements ActionListener{
         JFrame frame = new JFrame("Client Gui");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        JSplitPane clientguiPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-        		new MibBrowser(), new ClientGui());
-        
-        //frame.add(new MibBrowser(), BorderLayout.WEST);
         //Add contents to the window.
-        //frame.add(new ClientGui(), BorderLayout.CENTER);
+        frame.add(new ClientGui());
  
-        frame.add(clientguiPane);
-        
         //Display the window.
         //frame.pack(); // this packs all the components in the frame
-        frame.setSize(920, 580);
+        frame.setSize(600, 480);
         frame.setLocationRelativeTo(null); //this makes the window appear at the center
         frame.setVisible(true);
     }
@@ -319,17 +309,17 @@ public class ClientGui extends JPanel implements ActionListener{
         
         //got my jpanel
 		JPanel tablePane = new JPanel(new GridBagLayout());
-		
+
 		//aclTable = new MyTableModel();
 		Object[] newData = {"password", "RW"};
 		Object[] newData1 = {"wordword", "RO"};
  		aclTable.addData(newData);
 		aclTable.addData(newData1);
-		
+
 		JTable table = new JTable(aclTable);
 		//attach action listener for table
 		table.getModel().addTableModelListener(new TableModelListener(){
-			
+
 			public void tableChanged(TableModelEvent evt) 
 			{
 				int row = evt.getFirstRow();
@@ -337,7 +327,7 @@ public class ClientGui extends JPanel implements ActionListener{
 		        TableModel model = (TableModel)evt.getSource();
 		        String columnName = model.getColumnName(column);
 		        Object data = model.getValueAt(row, column);
-				
+
 		        //so retrieving data works...
 		        //System.out.println(model.getValueAt(row,column).toString());
 		        //but setting data doesnt....
@@ -345,9 +335,9 @@ public class ClientGui extends JPanel implements ActionListener{
 		        aclTable.fireTableCellUpdated(row, column);
 			}
 		});
-		
-		
-		
+
+
+
 		//aclTable.setPreferredScrollableViewportSize(new Dimension(500, 70));
 		//aclTable.setFillsViewportHeight(true);
 
@@ -360,10 +350,10 @@ public class ClientGui extends JPanel implements ActionListener{
         c.fill = GridBagConstraints.BOTH;
         c.weightx = 1.0;
         c.weighty = 1.0;
-		
+
 		// Add the scroll pane to this panel.
 		tablePane.add(scrollPane, c);
-		
+
 		// Add contents to the window.
 		frame.add(tablePane);
         
@@ -434,46 +424,47 @@ public class ClientGui extends JPanel implements ActionListener{
 		String OID = textFieldOID.getText();
 		String CommStr = textFieldCommStr.getText();
 		String methodGetOrSet = (String) comboBoxMethods.getSelectedItem();
-		
+
 		try {
-			
+			System.out.println(textFieldHost.getText() + ":" + Integer.parseInt(textFieldPort.getText()));
+
 			Socket s = new Socket(textFieldHost.getText(), Integer.parseInt(textFieldPort.getText()));// host, port
-	
+
 			if(methodGetOrSet.equalsIgnoreCase("get"))
 			{
 				Hashtable<String,String> ht = new Hashtable<String,String>();
-				
+
 				ht.put(OID, OID);
-				
+
 				snmp = new SNMP("1",CommStr,"1","GET", ht);
 			} 
 			else 
 			{
-				
+
 				Hashtable<String,String> ht = new Hashtable<String,String>();
-				
+
 				ht.put(OID, textFieldSet.getText());
-				
+
 				snmp = new SNMP("1",CommStr,"1","SET", ht);
-				
+
 			}
-			
-			
+
+
 			ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
 
 			// write the SNMP object to server
 			oos.writeObject(snmp);
 			oos.flush();
-			
+
 			ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
 
-			
+
 			// get the SNMP response
 			SNMP response = (SNMP) ois.readObject();
 
 			//System.out.println(response.vBinding.get(OID));
 			textArea.append(response.vBinding.get(OID) + newline);
-			
+
 	        textArea.setCaretPosition(textArea.getDocument().getLength());
 
 		} catch (UnknownHostException e) {

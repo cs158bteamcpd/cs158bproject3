@@ -64,12 +64,13 @@ public class NetworkElement{
 	
 	public static void main(String[]args){
 		NetworkElement ne = new NetworkElement();
+		
 		ne.generateMIB();
 		ne.addAlarm(1, "1.3.6.1.2.1.6.4", 50);
 		ne.addAlarm(1, "1.3.6.1.2.1.6.14", 70);
 		ne.startGenerator();
 		ne.startAlarmMonitor();
-		new CommunicationManager(9000,ne).start();
+		new CommunicationManager(9001,ne).start();
 	}
 	
 }
