@@ -18,7 +18,7 @@ public class MibBrowser extends JPanel {//implements TreeSelectionListener {
 		DefaultMutableTreeNode grandChild;
 		
 		//system 
-		child = new DefaultMutableTreeNode("system - 1.3.6.1.2.1.1");
+		/*child = new DefaultMutableTreeNode("system - 1.3.6.1.2.1.1");
 		root.add(child);
 		grandChild = new DefaultMutableTreeNode("sysDescr - 1.3.6.1.2.1.1.1");
 		child.add(grandChild);
@@ -33,7 +33,7 @@ public class MibBrowser extends JPanel {//implements TreeSelectionListener {
 		grandChild = new DefaultMutableTreeNode("sysLocation - 1.3.6.1.2.1.1.6");
 		child.add(grandChild);
 		grandChild = new DefaultMutableTreeNode("sysServices - 1.3.6.1.2.1.1.7");
-		child.add(grandChild);
+		child.add(grandChild);*/
 		
 		//tcp
 		child = new DefaultMutableTreeNode("tcp - 1.3.6.1.2.1.6");
