@@ -15,6 +15,11 @@ public class SNMP implements Serializable
 	private String host; // the host ID
 	private String version; //version of SNMP
 	  
+	public SNMP()
+	{
+		//empty
+	}
+	
 	 public SNMP(String hostID, String communityStr, String versionSNMP, String pdutype, Hashtable<String,String> variableBinding)
 	 {
 		//OID = objectID;
