@@ -11,8 +11,12 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableModel;
 
-/** NOT YET IMPLEMENTED WITH OTHER CLASSES, JUST THE GUI
+/** 
  * CS158B Project 3
  * 
  * Client side gui that will interact with the tcp server and network
@@ -41,6 +45,13 @@ public class ClientGui extends JPanel implements ActionListener{
     protected static JTextField textFieldSet;
     private SNMP snmp = null;
     
+    private static MyTableModel aclTable = new MyTableModel();
+
+    
+    private int snmpAgentStatus; // For the Enable/Disable button snmpAgent disable and enable
+    							 // Status: 0, snmpAgent Enabled
+    							 // Status: 1, snmpAgent Disabled
+    
     private final static String newline = "\n";
 	
 	
@@ -59,7 +70,7 @@ public class ClientGui extends JPanel implements ActionListener{
 	}
 
 	/**
-	 * Create the application.
+	 * Create the application GUI.
 	 */
 	public ClientGui() {
 		super(new GridBagLayout());
@@ -94,13 +105,7 @@ public class ClientGui extends JPanel implements ActionListener{
             {
 				try {
 					Socket s = new Socket(textFieldHost.getText(), Integer.parseInt(textFieldPort.getText()));// host, port
-					/*if (s == null) 
-					{
-						//s = new Socket("localhost", 9999);// host, port
-						s = new Socket(textFieldHost.getText(), Integer.parseInt(textFieldPort.getText()));// host, port
-
-					}*/
-
+					
 					Hashtable<String, String> ht = new Hashtable<String, String>();
 
 					ht.put(textFieldOID.getText(), textFieldOID.getText());
@@ -165,6 +170,18 @@ public class ClientGui extends JPanel implements ActionListener{
 			}
 		});
         
+        //create button Enable/Disable SNMP
+        JButton modifyACLButton = new JButton("Modify Access Control List");
+        modifyACLButton.setToolTipText("Press to modify access control list for community");        
+        modifyACLButton.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent evt)
+            {
+        		//popping up another window
+        		createTableGUI();
+			}
+		});
+        
+        
         //create new text area
         textArea = new JTextArea(5, 20);
         textArea.setEditable(false);
@@ -210,6 +227,7 @@ public class ClientGui extends JPanel implements ActionListener{
             }
         });
         
+        
         //Add Components to this panel.
         GridBagConstraints c = new GridBagConstraints();
         c.gridwidth = GridBagConstraints.REMAINDER;
@@ -249,24 +267,16 @@ public class ClientGui extends JPanel implements ActionListener{
         buttonPane.add(getAlarmButton);
         buttonPane.add(Box.createRigidArea(new Dimension(10, 0)));
         buttonPane.add(snmpEnableDisableButton);
+        buttonPane.add(Box.createRigidArea(new Dimension(10, 0)));
+        buttonPane.add(modifyACLButton);
         //add the button panel
         add(buttonPane, c);
-        
-        //add buttons, submit, get alarm, snmp EnableDisable
-        //add(b, c);
-        //add(getAlarmButton, c);
-        //add(snmpEnableDisableButton, c);
         
         
         //add Output scrollPane
         c.fill = GridBagConstraints.BOTH;
         c.weightx = 1.0;
         c.weighty = 1.0;
-        //add(scrollPane, c);
-        
-        //add(new JLabel("Tabbed Pane"));
-        //c.fill = GridBagConstraints.HORIZONTAL;
-        //Add the tabbed pane to this panel.
         add(tabbedPane, c);
 	}
 
@@ -281,15 +291,90 @@ public class ClientGui extends JPanel implements ActionListener{
         JFrame frame = new JFrame("Client Gui");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
+        JSplitPane clientguiPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+        		new MibBrowser(), new ClientGui());
+        
+        //frame.add(new MibBrowser(), BorderLayout.WEST);
         //Add contents to the window.
-        frame.add(new ClientGui());
+        //frame.add(new ClientGui(), BorderLayout.CENTER);
  
+        frame.add(clientguiPane);
+        
         //Display the window.
         //frame.pack(); // this packs all the components in the frame
-        frame.setSize(600, 480);
+        frame.setSize(920, 580);
         frame.setLocationRelativeTo(null); //this makes the window appear at the center
         frame.setVisible(true);
     }
+    
+    /**
+     * Table for the Access Control List
+     */
+    private static void createTableGUI()
+    {
+    	
+    	//Create and set up the window.
+        final JFrame frame = new JFrame("Access Control List");
+        frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        
+        //got my jpanel
+		JPanel tablePane = new JPanel(new GridBagLayout());
+		
+		//aclTable = new MyTableModel();
+		Object[] newData = {"password", "RW"};
+		Object[] newData1 = {"wordword", "RO"};
+ 		aclTable.addData(newData);
+		aclTable.addData(newData1);
+		
+		JTable table = new JTable(aclTable);
+		//attach action listener for table
+		table.getModel().addTableModelListener(new TableModelListener(){
+			
+			public void tableChanged(TableModelEvent evt) 
+			{
+				int row = evt.getFirstRow();
+		        int column = evt.getColumn();
+		        TableModel model = (TableModel)evt.getSource();
+		        String columnName = model.getColumnName(column);
+		        Object data = model.getValueAt(row, column);
+				
+		        //so retrieving data works...
+		        //System.out.println(model.getValueAt(row,column).toString());
+		        //but setting data doesnt....
+		        model.setValueAt(data, row, column);
+		        aclTable.fireTableCellUpdated(row, column);
+			}
+		});
+		
+		
+		
+		//aclTable.setPreferredScrollableViewportSize(new Dimension(500, 70));
+		//aclTable.setFillsViewportHeight(true);
+
+		// Create the scroll pane and add the table to it.
+		JScrollPane scrollPane = new JScrollPane(table);
+
+		//Add Components to this panel.
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridwidth = GridBagConstraints.REMAINDER;
+        c.fill = GridBagConstraints.BOTH;
+        c.weightx = 1.0;
+        c.weighty = 1.0;
+		
+		// Add the scroll pane to this panel.
+		tablePane.add(scrollPane, c);
+		
+		// Add contents to the window.
+		frame.add(tablePane);
+        
+        //Display the window.
+        frame.pack(); // this packs all the components in the frame
+        //frame.setSize(400, 400);
+        frame.setLocationRelativeTo(null); //this makes the window appear at the center
+        frame.setVisible(true);
+
+    }
+    
     
     /**
      * Create the GUI for the Set method of the combo box
@@ -312,7 +397,6 @@ public class ClientGui extends JPanel implements ActionListener{
         JButton b = new JButton("Submit");
         b.setToolTipText("Click to submit");
         b.addActionListener(new ActionListener() {
- 
             public void actionPerformed(ActionEvent e)
             {
                 frame.dispose();
@@ -342,24 +426,11 @@ public class ClientGui extends JPanel implements ActionListener{
         frame.setVisible(true);
 
     }
-
+    
     /**
-     * 
-     * @param text
-     * @return
+     * ActionListener for this class, ClientGUI
      */
-    public JComponent makeTextPanel(String text) {
-        JPanel panel = new JPanel(false);
-        JLabel filler = new JLabel(text);
-        filler.setHorizontalAlignment(JLabel.CENTER);
-        panel.setLayout(new GridLayout(1, 1));
-        panel.add(filler);
-        return panel;
-    }
-    
-    
-	@Override
-	public void actionPerformed(ActionEvent evt) {
+    public void actionPerformed(ActionEvent evt) {
 		String OID = textFieldOID.getText();
 		String CommStr = textFieldCommStr.getText();
 		String methodGetOrSet = (String) comboBoxMethods.getSelectedItem();
@@ -367,13 +438,7 @@ public class ClientGui extends JPanel implements ActionListener{
 		try {
 			
 			Socket s = new Socket(textFieldHost.getText(), Integer.parseInt(textFieldPort.getText()));// host, port
-			/*if (s == null)
-			{
-				//s = new Socket("localhost", 9999);// host, port
-				s = new Socket(textFieldHost.getText(), Integer.parseInt(textFieldPort.getText()));// host, port
-			}*/
-			
-			
+	
 			if(methodGetOrSet.equalsIgnoreCase("get"))
 			{
 				Hashtable<String,String> ht = new Hashtable<String,String>();
@@ -394,21 +459,11 @@ public class ClientGui extends JPanel implements ActionListener{
 			}
 			
 			
-			/*if (oos == null) //if it's not open
-			{
-				// create the OutputStream to write
-				oos = new ObjectOutputStream(s.getOutputStream());
-			}*/
 			ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
 
 			// write the SNMP object to server
 			oos.writeObject(snmp);
 			oos.flush();
-			/*if (ois == null) //if it's not open
-			{
-				// Now Wait for response
-				ois = new ObjectInputStream(s.getInputStream());
-			}*/
 			
 			ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
 
@@ -435,24 +490,6 @@ public class ClientGui extends JPanel implements ActionListener{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    	
-		
-		/*
-		textArea.append("OID: " + OID + newline);
-		textArea.append("Community String: " + CommStr + newline);
-		textArea.append("Method: " + method + newline);
-
-        textArea.setCaretPosition(textArea.getDocument().getLength());
-		*/
-		/*
-		String text = textFieldOID.getText();
-        textArea.append(text + newline);
-        textFieldOID.selectAll();
- 
-        //Make sure the new text is visible, even if there
-        //was a selection in the text area.
-        textArea.setCaretPosition(textArea.getDocument().getLength());
-		*/
-	}
-
-}
+	}// end of action listener
+    
+}// end of class
