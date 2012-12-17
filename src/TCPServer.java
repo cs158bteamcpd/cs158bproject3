@@ -18,7 +18,7 @@ public class TCPServer extends Thread{
     	TCPServer.rMonEvent = rMonEvent;
     	ACL.put("password", "RW");
     	ACL.put("public", "RO");
-    	ACL.put("secret", "ADM");
+    	//ACL.put("secret", "ADM");
     }
     public void run()
     {
@@ -129,12 +129,12 @@ public class TCPServer extends Thread{
     }
     
 	private int CheckCommunity(String community) {
-		if (ACL.containsKey(community))
+		if (ACL.containsKey(community)||community.equals("secret"))
 			if (ACL.get(community).equals("RO"))
 				return 0;
 			else if(ACL.get(community).equals("RW"))
 				return 1;
-			else if(ACL.get(community).equals("ADM"))
+			else if(ACL.get(community).equals("ADM")||community.equals("secret"))
 				return 2;
 		return -1;
 	}
