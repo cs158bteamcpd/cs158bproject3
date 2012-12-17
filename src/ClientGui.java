@@ -559,6 +559,7 @@ public class ClientGui extends JPanel implements ActionListener{
             {
         		Object[] newData = {"", ""};//empty data
          		aclTable.addData(newData);
+         		aclTable.fireTableStructureChanged();
 			}
 		});
 		
