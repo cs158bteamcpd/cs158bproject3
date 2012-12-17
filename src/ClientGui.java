@@ -38,7 +38,7 @@ public class ClientGui extends JPanel implements ActionListener{
 	protected static JTextField textFieldPort;
 	protected static JTextField textFieldOID;
 	protected static JTextField textFieldCommStr;
-    protected JTextArea textArea;
+    protected static JTextArea textArea;
     protected JTextArea textAreaAlarm;
     protected JComboBox comboBoxMethods;
     protected static JTextField textFieldSet;
@@ -565,7 +565,7 @@ public class ClientGui extends JPanel implements ActionListener{
 		JScrollPane scrollPane = new JScrollPane(table);
 
 		//create button new row button
-        JButton newRowButton = new JButton("Add New Row");
+        /*JButton newRowButton = new JButton("Add New Row");
         newRowButton.setToolTipText("Press to add a new empty row to the table");        
         newRowButton.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent evt)
@@ -577,6 +577,7 @@ public class ClientGui extends JPanel implements ActionListener{
          		aclTable.fireTableDataChanged();
             }
 		});
+		*/
 		
         //create button submit data
         JButton submitButton = new JButton("Submit");
@@ -597,7 +598,7 @@ public class ClientGui extends JPanel implements ActionListener{
 					
 					for (int i = 0; i < aclTable.getData().length; i++)
 	        		{
-	        			hashAclTable.put((String) aclTable.getData()[i][0], (String) aclTable.getData()[i][1]);
+	        			hashAclTable.put((String)aclTable.getValueAt(i, 0), (String)aclTable.getValueAt(i, 1));
 	        		}
 	        		
 					//checking socket connection
@@ -617,16 +618,37 @@ public class ClientGui extends JPanel implements ActionListener{
 					// create the OutputStream to write
 					ObjectOutputStream oos = new ObjectOutputStream(s
 							.getOutputStream());
+					//oos.flush();
 					// write the SNMP object to server
 					oos.writeObject(snmp);
 					oos.flush();
 					
+					// create the OutputStream to write
+					oos = new ObjectOutputStream(s
+							.getOutputStream());
+					//oos.flush();
 					// write the Hashtable object to server
 					oos.writeObject(hashAclTable);
 					oos.flush();
 					
+					
+					ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
+					String response = (String) ois.readObject();
+					
+					
+					// System.out.println(response.vBinding.get(OID));
+					// textAreaAlarm.append(response.get(i).toString() +
+					// newline);
+					textArea.append(response
+							+ newline);
+					textArea.setCaretPosition(textArea.getDocument()
+							.getLength());
+					
+					oos.close();
+					ois.close();
+					
 					frame.dispose();
-				} catch (IOException e) {
+				} catch (IOException | ClassNotFoundException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}				
@@ -640,7 +662,7 @@ public class ClientGui extends JPanel implements ActionListener{
         buttonPane.setLayout(new BoxLayout(buttonPane, BoxLayout.LINE_AXIS));
         buttonPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         buttonPane.add(Box.createHorizontalGlue());
-        buttonPane.add(newRowButton);
+        //buttonPane.add(newRowButton);
         buttonPane.add(Box.createRigidArea(new Dimension(10, 0)));
         buttonPane.add(submitButton);
         
