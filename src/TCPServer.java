@@ -103,12 +103,23 @@ public class TCPServer extends Thread{
 	    			}
 	    			else if(obj.setacl&&!(CheckStatus(socket)))
 	    			{
+	    				System.out.println("ACL is beeing recieved");
 	    				
 	    				ObjectInputStream ios = new ObjectInputStream(socket.getInputStream());
 		    			//oos.flush();
+	    				//SNMP newObj = (SNMP) ios.readObject();
+	    				
+	    				
 		    			ACL = (Hashtable<String, String>)ios.readObject();
 		    			//oos.flush();
-		    			ios.close();
+		    			
+		    			
+	    				ObjectOutputStream response = new ObjectOutputStream(socket.getOutputStream());
+	    				response.flush();
+	    				response.writeObject("ACL Updated");
+	    				response.flush();
+	    				response.close();
+	    				ios.close();
 	    			}
 	    			else{
 	    				Socket ss = new Socket(NEHOST, 9001);

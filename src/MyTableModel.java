@@ -78,7 +78,6 @@ public class MyTableModel extends AbstractTableModel {
 			}
 		}
 		
-		this.fireTableRowsInserted(getRowCount()-1, getRowCount()-1);
 	}
 	
 

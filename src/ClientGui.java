@@ -514,8 +514,8 @@ public class ClientGui extends JPanel implements ActionListener{
         //got my jpanel
 		JPanel tablePane = new JPanel(new GridBagLayout());
 
-		//aclTable = new MyTableModel();
-		//aclTable.clearTable();
+		aclTable = new MyTableModel();
+		aclTable.clearTable();
 		//Object[] newData = {"password", ""};
 		//Object[] newData1 = {"wordword", ""};
  		//aclTable.addData(newData);
@@ -541,18 +541,20 @@ public class ClientGui extends JPanel implements ActionListener{
 
 			public void tableChanged(TableModelEvent evt) 
 			{
-		        //AbstractTableModel model = (AbstractTableModel)evt.getSource();
-		        abstractTableModel = (AbstractTableModel)evt.getSource();
-		        //model.fireTableRowsInserted(
+		        AbstractTableModel model = (AbstractTableModel)evt.getSource();
+		        //abstractTableModel = (AbstractTableModel)evt.getSource();
+		       // model.fireTableRowsInserted(
 		        //		aclTable.getColumnCount()-1, aclTable.getColumnCount()-1);
-				
+				//model.fireTableStructureChanged();
+		        
+		        
 				int row = evt.getFirstRow();
 		        int column = evt.getColumn();
 		        //String columnName = model.getColumnName(column);
-		        Object data = abstractTableModel.getValueAt(row, column);
+		        Object data = model.getValueAt(row, column);
 
-		        abstractTableModel.setValueAt(data, row, column);
-		        abstractTableModel.fireTableCellUpdated(row, column);
+		        model.setValueAt(data, row, column);
+		        model.fireTableCellUpdated(row, column);
 			}
 		});
 
@@ -635,6 +637,8 @@ public class ClientGui extends JPanel implements ActionListener{
 					ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
 					String response = (String) ois.readObject();
 					
+					//update table model
+					//aclTable.fireTableDataChanged();
 					
 					// System.out.println(response.vBinding.get(OID));
 					// textAreaAlarm.append(response.get(i).toString() +
