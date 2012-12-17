@@ -43,6 +43,7 @@ public class ClientGui extends JPanel implements ActionListener{
     protected static JTextField textFieldSet;
     private SNMP snmp = new SNMP();//empty SNMP Object
     
+    
     private static MyTableModel aclTable = new MyTableModel();
 
     
@@ -193,18 +194,20 @@ public class ClientGui extends JPanel implements ActionListener{
 						ht.put(textFieldOID.getText(), textFieldOID.getText());
 
 						snmp = new SNMP("1", textFieldCommStr.getText(), "1",
-								"GET", ht);
+								"SET", ht);
 
 						snmp.setFlag();
+						
+
 						// setting the SNMP Agent status, enable/disable
-						if (snmp.status.equalsIgnoreCase("ON")) {
+						if (snmpAgentStatus.equalsIgnoreCase("ON")) {
 							// if on set off
 							snmp.setStatus("OFF");
-							snmpAgentStatus = snmp.status;
+							snmpAgentStatus = "OFF";
 						} else {
 							// otherwise turn on
 							snmp.setStatus("ON");
-							snmpAgentStatus = snmp.status;
+							snmpAgentStatus = "ON";
 						}
 
 						// create the OutputStream to write
@@ -217,11 +220,13 @@ public class ClientGui extends JPanel implements ActionListener{
 						ObjectInputStream ois = new ObjectInputStream(s
 								.getInputStream());
 					
-					
+						String response =(String) ois.readObject();
+						
+						
 						// System.out.println(response.vBinding.get(OID));
 						// textAreaAlarm.append(response.get(i).toString() +
 						// newline);
-						textArea.append("SNMP Agent " + ois.read()
+						textArea.append(response
 								+ newline);
 						textArea.setCaretPosition(textArea.getDocument()
 								.getLength());
@@ -246,6 +251,9 @@ public class ClientGui extends JPanel implements ActionListener{
 					textArea.append("Error retreving data" + newline);
 					textArea.setCaretPosition(textAreaAlarm.getDocument()
 							.getLength());
+				} catch (ClassNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 
 			}
@@ -427,6 +435,7 @@ public class ClientGui extends JPanel implements ActionListener{
 		JPanel tablePane = new JPanel(new GridBagLayout());
 
 		//aclTable = new MyTableModel();
+		aclTable.clearTable();
 		Object[] newData = {"password", "RW"};
 		Object[] newData1 = {"wordword", "RO"};
  		aclTable.addData(newData);
@@ -539,11 +548,22 @@ public class ClientGui extends JPanel implements ActionListener{
 		String methodGetOrSet = (String) comboBoxMethods.getSelectedItem();
 
 		try {
+			
 
 			// check HOST and PORT first
 			if (!(textFieldHost.getText().equals("")
 					|| textFieldPort.getText().equals("") || textFieldCommStr
 					.getText().equals(""))) {
+				
+				if(snmpAgentStatus.equalsIgnoreCase("OFF"))// we should be able to assume that the agent is disabled
+				{
+					textArea.append("SNMP Agent is " + snmpAgentStatus
+							+ newline);
+
+					textArea.setCaretPosition(textArea.getDocument()
+							.getLength());
+					return;
+				}
 
 				System.out.println(textFieldHost.getText() + ":"
 						+ Integer.parseInt(textFieldPort.getText()));
@@ -579,23 +599,25 @@ public class ClientGui extends JPanel implements ActionListener{
 
 					ObjectInputStream ois = new ObjectInputStream(
 							s.getInputStream());
+					
+					Object obj = ois.readObject(); 
+					if(obj instanceof String){
+						textArea.append((String)obj + newline);
+
+						textArea.setCaretPosition(textArea.getDocument()
+								.getLength());
+						return;
+					}
 
 					// get the SNMP response
-					SNMP response = (SNMP) ois.readObject();
+					SNMP response = (SNMP) obj;
 
 					// System.out.println(response.vBinding.get(OID));
 					textArea.append(response.vBinding.get(OID) + newline);
 
 					textArea.setCaretPosition(textArea.getDocument()
 							.getLength());
-				} else// we should be able to assume that the agent is disabled
-				{
-					textArea.append("SNMP Agent is " + snmpAgentStatus
-							+ newline);
-
-					textArea.setCaretPosition(textArea.getDocument()
-							.getLength());
-				}
+				} 
 
 			} else {
 				textArea.append("Host, Port, Community not entered." + newline);

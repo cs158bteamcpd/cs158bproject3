@@ -8,6 +8,7 @@ public class TCPServer extends Thread{
 	private static ArrayList<RMONEvent> rMonEvent;
     private Hashtable<String,String> ACL = new Hashtable<String,String>();
     private ServerSocket s;
+    private final String NEHOST = "localhost";
 
 	private boolean Status = false;
     private static int neport=9000;
@@ -27,7 +28,15 @@ public class TCPServer extends Thread{
     			InputStream is = socket.getInputStream();
     			ObjectInputStream ois = new ObjectInputStream(is);  
     			SNMP obj = (SNMP)ois.readObject();
-	    		if(obj.pdutype.equalsIgnoreCase("TRAP")&& CheckCommunity(obj.getCommunity()) > 0)
+    			if(CheckCommunity(obj.getCommunity()) < 0){
+    				//Invalid password
+    				ObjectOutputStream set = new ObjectOutputStream(socket.getOutputStream());
+    				set.flush();
+    				set.writeObject("Permission Denied");
+    				set.flush();
+    				set.close();
+    			}
+    			else if(obj.pdutype.equalsIgnoreCase("TRAP")&& CheckCommunity(obj.getCommunity()) > 0)
 	    		{
 	    			CheckStatus(socket);
 	    			Hashtable<String,String> vBinding = obj.getvBinding();
@@ -38,65 +47,70 @@ public class TCPServer extends Thread{
 	    		}
 	    		else if(obj.pdutype.equalsIgnoreCase("GET")&&CheckCommunity(obj.getCommunity())>=0)
 	    		{
-	    			CheckStatus(socket);
-	    			if(obj.flag)
-	    			{
-	    			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-	    			oos.flush();
-	    			oos.writeObject(rMonEvent);
-	    			oos.flush();
-	    			oos.close();
-	    			}
-	    			else
-	    			{
-	    				Socket ss= new Socket("localhost", 9001);
-	    				ObjectOutputStream get = new ObjectOutputStream(ss.getOutputStream());
-	    				get.flush();
-	    				obj.setCommunity("secret");
-	    				get.writeObject(obj);
-	    				ObjectInputStream ois1 = new ObjectInputStream(ss.getInputStream());   
-	    			 	SNMP response = (SNMP)ois1.readObject();
-	    			 	ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-	    			 	oos.flush();
-	    			 	oos.writeObject(response);
-	    			 	oos.flush();
-	    			 	oos.close();
-	    			 	get.flush();
-	    			 	get.close();
-	    			 	ss.close();
+	    			if(!CheckStatus(socket)){
+		    			if(obj.flag)
+		    			{
+		    			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+		    			oos.flush();
+		    			oos.writeObject(rMonEvent);
+		    			oos.flush();
+		    			oos.close();
+		    			}
+		    			else
+		    			{
+		    				Socket ss= new Socket(NEHOST, 9001);
+		    				ObjectOutputStream get = new ObjectOutputStream(ss.getOutputStream());
+		    				get.flush();
+		    				obj.setCommunity("secret");
+		    				get.writeObject(obj);
+		    				ObjectInputStream ois1 = new ObjectInputStream(ss.getInputStream());   
+		    			 	SNMP response = (SNMP)ois1.readObject();
+		    			 	ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+		    			 	oos.flush();
+		    			 	oos.writeObject(response);
+		    			 	oos.flush();
+		    			 	oos.close();
+		    			 	get.flush();
+		    			 	get.close();
+		    			 	ss.close();
+		    			}
 	    			}
 	    		}
 	    		else if(obj.pdutype.equalsIgnoreCase("SET")&& CheckCommunity(obj.getCommunity())>0)
 	    		{
 	    			if(obj.status.equalsIgnoreCase("OFF")&&(obj.flag))
 	    			{
-	    				Status = true;
+	    				Status = true; //OFFFFF
 	    				CheckStatus(socket);
 	    			}
 	    			else if(obj.status.equalsIgnoreCase("ON")&&(obj.flag)){
-	    				Status = false;
-	    				Socket ss = new Socket("localhost", 9001);
-	    				ObjectOutputStream set = new ObjectOutputStream(ss.getOutputStream());
+	    				Status = false; //ONNNNN
+	    				//Socket ss = new Socket("localhost", 9001);
+	    				ObjectOutputStream set = new ObjectOutputStream(socket.getOutputStream());
 	    				set.flush();
 	    				set.writeObject("SNMP Agent enabled");
 	    				set.flush();
 	    				set.close();
-	    				ss.close();
 	    			}
-	    			Socket ss = new Socket("localhost", 9001);
-	    			ObjectOutputStream set = new ObjectOutputStream(ss.getOutputStream());
-	    			set.flush();
-	    			obj.setCommunity("secret");
-	    			set.writeObject(obj);
-	    			set.flush();
-	    			ObjectInputStream in = new ObjectInputStream(ss.getInputStream());
-	    			SNMP response = (SNMP) in.readObject();
-	    			set= new ObjectOutputStream(socket.getOutputStream());
-	    			set.flush();
-	    			set.writeObject(response);
-	    			set.flush();
-	    			set.close();
-	    			ss.close();
+	    			else{
+	    				Socket ss = new Socket(NEHOST, 9001);
+	    				ObjectOutputStream set = new ObjectOutputStream(ss.getOutputStream());
+		    			set.flush();
+		    			obj.setCommunity("secret");
+		    			set.writeObject(obj);
+		    			set.flush();
+		    			ObjectInputStream in = new ObjectInputStream(ss.getInputStream());
+		    			SNMP response = (SNMP) in.readObject();
+		    			set= new ObjectOutputStream(socket.getOutputStream());
+		    			set.flush();
+		    			set.writeObject(response);
+		    			set.flush();
+		    			set.close();
+	    			}
+	    				
+	    				
+	    			
+	    			
 	    		}
 	    		//count++;
 	    		//System.out.println("PDU TYPE: " +obj.pdutype);
@@ -115,16 +129,16 @@ public class TCPServer extends Thread{
     }
     
 	private int CheckCommunity(String community) {
-		if (ACL.get(community).equals("RO"))
-			return 0;
-		else if(ACL.get(community).equals("RW"))
-			return 1;
-		else if(ACL.get(community).equals("ADM"))
-			return 2;
-		else
-			return -1;
+		if (ACL.containsKey(community))
+			if (ACL.get(community).equals("RO"))
+				return 0;
+			else if(ACL.get(community).equals("RW"))
+				return 1;
+			else if(ACL.get(community).equals("ADM"))
+				return 2;
+		return -1;
 	}
-	private void CheckStatus(Socket socket) throws ClassNotFoundException, IOException {
+	private boolean CheckStatus(Socket socket) throws ClassNotFoundException, IOException {
 		if(Status)
 		{
 			ObjectOutputStream set = new ObjectOutputStream(socket.getOutputStream());
@@ -132,9 +146,10 @@ public class TCPServer extends Thread{
 			set.writeObject("SNMP Agent Disabled");
 			set.flush();
 			set.close();
+			return true;
 		}
 		else
-			return;
+			return false;
 	}
 	public static void main(String[] args) throws IOException
     {

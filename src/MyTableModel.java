@@ -133,6 +133,10 @@ public class MyTableModel extends AbstractTableModel {
 			printDebugData();
 		}
 	}
+	
+	public void clearTable(){
+		data = null;
+	}
 
 	
 	private void printDebugData() {
