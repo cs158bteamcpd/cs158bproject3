@@ -8,7 +8,7 @@ public class TCPServer extends Thread{
 	private static ArrayList<RMONEvent> rMonEvent;
     private Hashtable<String,String> ACL = new Hashtable<String,String>();
     private ServerSocket s;
-    private final String NEHOST = "192.168.0.192";
+    private final String NEHOST = "localhost";
 
 	private boolean Status = false;
     private static int neport=9000;

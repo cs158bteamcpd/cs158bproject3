@@ -137,9 +137,17 @@ public class ClientGui extends JPanel implements ActionListener{
 						// Now Wait for response
 						ObjectInputStream ois = new ObjectInputStream(s
 								.getInputStream());
+						Object obj = ois.readObject();
+						if (obj instanceof String){
+							//String response = (String) obj;
+							textAreaAlarm.append((String)obj + newline);
+							textAreaAlarm.setCaretPosition(textAreaAlarm.getDocument().getLength());
+							return;
+						}
+						else{
 
 						// get the RMONevent response
-						ArrayList<RMONEvent> response = (ArrayList<RMONEvent>) ois.readObject();
+						ArrayList<RMONEvent> response =(ArrayList<RMONEvent>) obj;
 
 						for (int i = 0; i < response.size(); i++) {
 							// System.out.println(response.vBinding.get(OID));
@@ -147,7 +155,7 @@ public class ClientGui extends JPanel implements ActionListener{
 									+ newline);
 							textAreaAlarm.setCaretPosition(textAreaAlarm
 									.getDocument().getLength());
-						}
+						}}
 
 					} else {
 						textArea.append("Host, Port, or Community not entered."
