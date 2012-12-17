@@ -16,6 +16,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 /** 
@@ -29,7 +30,7 @@ import javax.swing.table.TableModel;
  */
 public class ClientGui extends JPanel implements ActionListener{
 
-	private Socket s;
+	private static Socket s;
 	private ObjectOutputStream oos;
 	private ObjectInputStream ois;
 
@@ -41,7 +42,10 @@ public class ClientGui extends JPanel implements ActionListener{
     protected JTextArea textAreaAlarm;
     protected JComboBox comboBoxMethods;
     protected static JTextField textFieldSet;
-    private SNMP snmp = new SNMP();//empty SNMP Object
+    private static SNMP snmp = new SNMP();//empty SNMP Object
+    
+    
+    private static Hashtable<String, String> hashAclTable;
     
     
     private static MyTableModel aclTable = new MyTableModel();
@@ -265,21 +269,83 @@ public class ClientGui extends JPanel implements ActionListener{
         modifyACLButton.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent evt)
             {
-        		//check HOST and PORT first
-				if (!(textFieldHost.getText().equals("") 
-						|| textFieldPort.getText().equals("") 
-						|| textFieldCommStr.getText().equals("")) ) 
-				{
-					//popping up another window
-					createTableGUI();
-				}
-				else
-				{
-					textArea.append("Host, Port, Community not entered."
-							+ newline);
-					textArea.setCaretPosition(textArea.getDocument()
+        		try {
+					
+					//check HOST and PORT first
+					if (!(textFieldHost.getText().equals("") 
+							|| textFieldPort.getText().equals(""))
+							|| textFieldCommStr.getText().equals("")) 
+					{
+						//request table data
+						Socket s = new Socket(textFieldHost.getText(), Integer
+								.parseInt(textFieldPort.getText()));
+						
+						Hashtable<String, String> ht = new Hashtable<String, String>();
+
+						ht.put(textFieldOID.getText(), textFieldOID.getText());
+
+						snmp = new SNMP("1", textFieldCommStr.getText(), "1",
+								"SET", ht);
+
+						snmp.setFlag();
+						snmp.setACL();
+
+						// setting the SNMP Agent status, enable/disable
+						if (snmpAgentStatus.equalsIgnoreCase("ON")) {
+							// if on set off
+							snmp.setStatus("OFF");
+							snmpAgentStatus = "OFF";
+						} else {
+							// otherwise turn on
+							snmp.setStatus("ON");
+							snmpAgentStatus = "ON";
+						}
+
+						// create the OutputStream to write
+						ObjectOutputStream oos = new ObjectOutputStream(s
+								.getOutputStream());
+						// write the SNMP object to server
+						oos.writeObject(snmp);
+
+						
+						/* Once we get the data (HashTable) then we populate table*/
+						
+						// Now Wait for response
+						ObjectInputStream ois = new ObjectInputStream(s
+								.getInputStream());
+					
+						Hashtable<String, String> response =
+								(Hashtable<String, String>) ois.readObject();
+						
+						
+						//then we try to populate table
+						createTableGUI(response);
+					}
+					else
+					{
+						textArea.append("Host, Port, Community not entered."
+								+ newline);
+						textArea.setCaretPosition(textArea.getDocument()
+								.getLength());
+					}
+					
+				} catch (UnknownHostException e) {
+					// TODO Auto-generated catch block
+					// System.out.println("Unknown Host");
+					textArea.append("Unknown Host" + newline);
+					textArea.setCaretPosition(textAreaAlarm.getDocument()
 							.getLength());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					// System.out.println("Error retreving data");
+					textArea.append("Error retreving data" + newline);
+					textArea.setCaretPosition(textAreaAlarm.getDocument()
+							.getLength());
+				} catch (ClassNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
+				
 			}
 		});
         
@@ -423,9 +489,11 @@ public class ClientGui extends JPanel implements ActionListener{
     
     /**
      * Table for the Access Control List
+     * @param response 
      */
-    private static void createTableGUI()
+    private static void createTableGUI(Hashtable<String, String> response)
     {
+    	hashAclTable = response;
     	
     	//Create and set up the window.
         final JFrame frame = new JFrame("Access Control List");
@@ -436,12 +504,26 @@ public class ClientGui extends JPanel implements ActionListener{
 
 		//aclTable = new MyTableModel();
 		aclTable.clearTable();
-		Object[] newData = {"password", "RW"};
-		Object[] newData1 = {"wordword", "RO"};
- 		aclTable.addData(newData);
-		aclTable.addData(newData1);
+		//Object[] newData = {"password", ""};
+		//Object[] newData1 = {"wordword", ""};
+ 		//aclTable.addData(newData);
+		//aclTable.addData(newData1);
 
+		//populate table with hashtable
+		aclTable.populateTable(hashAclTable);
+		
 		JTable table = new JTable(aclTable);
+
+		//Table Column
+		TableColumn aclTypeColumn = table.getColumnModel().getColumn(1); 
+		
+		JComboBox<String> aclTypeComboBox = new JComboBox<String>();
+		aclTypeComboBox.addItem("RO");
+		aclTypeComboBox.addItem("RW");
+		aclTypeComboBox.setSelectedIndex(0); //the first option
+		aclTypeColumn.setCellEditor(new DefaultCellEditor(aclTypeComboBox));
+		
+		
 		//attach action listener for table
 		table.getModel().addTableModelListener(new TableModelListener(){
 
@@ -466,6 +548,50 @@ public class ClientGui extends JPanel implements ActionListener{
 		// Create the scroll pane and add the table to it.
 		JScrollPane scrollPane = new JScrollPane(table);
 
+		//create button new row button
+        JButton newRowButton = new JButton("Add New Row");
+        newRowButton.setToolTipText("Press to add a new empty row to the table");        
+        newRowButton.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent evt)
+            {
+        		Object[] newData = {"", ""};//empty data
+         		aclTable.addData(newData);
+			}
+		});
+		
+        //create button submit data
+        JButton submitButton = new JButton("Submit");
+        submitButton.setToolTipText("Press to submit data");        
+        submitButton.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent evt)
+            {
+        		//This is were we write back to the Server about
+        		//The table change
+        		
+        		for (int i = 0; i < aclTable.getData().length; i++)
+        		{
+        			hashAclTable.put((String) aclTable.getData()[i][0], (String) aclTable.getData()[i][1]);
+        		}
+        		
+        		
+        		// create the OutputStream to write
+				ObjectOutputStream oos;
+				try {
+					
+					oos = new ObjectOutputStream(s
+							.getOutputStream());
+					
+					// write the SNMP object to server
+					oos.writeObject(hashAclTable);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}				
+        		
+			}
+		});
+        
+        
 		//Add Components to this panel.
         GridBagConstraints c = new GridBagConstraints();
         c.gridwidth = GridBagConstraints.REMAINDER;
@@ -479,6 +605,7 @@ public class ClientGui extends JPanel implements ActionListener{
 		// Add contents to the window.
 		frame.add(tablePane);
         
+		
         //Display the window.
         frame.pack(); // this packs all the components in the frame
         //frame.setSize(400, 400);

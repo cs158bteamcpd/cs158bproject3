@@ -1,3 +1,6 @@
+import java.util.Enumeration;
+import java.util.Hashtable;
+
 import javax.swing.table.AbstractTableModel;
 
 /**
@@ -10,13 +13,40 @@ public class MyTableModel extends AbstractTableModel {
 
 
 	private String[] columnNames = { "Community String", "Community String Type" };
-	private Object[][] data = null;
+	private static Object[][] data = null;
 	
 	/**
 	 * Construct empty data
 	 */
 	public MyTableModel()
 	{
+	}
+	
+	/**
+	 * Constructor
+	 * @param d the object data to be inputed to the table
+	 */
+	public MyTableModel(Object[][] d) 
+	{
+		data = d;
+	}
+	
+	public Object[][] getData()
+	{
+		return data;
+	}
+	
+	public void populateTable(Hashtable<String, String> hTable)
+	{
+		Enumeration e = hTable.keys();
+		
+		while(e.hasMoreElements())
+		{
+			Object str = e.nextElement();
+			Object[] newData = { str, hTable.get(str) };
+			
+			addData( newData );
+		}
 	}
 	
 	/**
@@ -49,15 +79,6 @@ public class MyTableModel extends AbstractTableModel {
 		}
 	}
 	
-	
-	/**
-	 * Constructor
-	 * @param d the object data to be inputed to the table
-	 */
-	public MyTableModel(Object[][] d) 
-	{
-		data = d;
-	}
 
 	/**
 	 * Get the number of columns
