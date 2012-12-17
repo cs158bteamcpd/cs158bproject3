@@ -17,13 +17,13 @@ public class NetworkElement{
 	String server = "localhost";
 	int port = 9000;
 	String id = "network-1";
-	String community = "password";
+	String community = "secret";
 	Hashtable<String, Integer> tcpMIB = new Hashtable<String, Integer>();
 	
 	ArrayList<RMONAlarm> alarms;
 	ArrayList<RMONEvent> events;
 	public NetworkElement(){
-		community = "password";
+		community = "secret";
 		alarms = new ArrayList<RMONAlarm>();
 		events = new ArrayList<RMONEvent>();
 	}

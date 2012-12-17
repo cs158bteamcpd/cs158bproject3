@@ -6,7 +6,7 @@ import java.io.*;
 public class TCPServer extends Thread{
 	
 	private static ArrayList<RMONEvent> rMonEvent;
-    
+    private Hashtable<String,String> ACL = new Hashtable<String,String>();
     private ServerSocket s;
 
 	private boolean Status = false;
@@ -15,6 +15,9 @@ public class TCPServer extends Thread{
     public TCPServer(ServerSocket s,ArrayList<RMONEvent> rMonEvent){
     	this.s = s;
     	TCPServer.rMonEvent = rMonEvent;
+    	ACL.put("password", "RW");
+    	ACL.put("public", "RO");
+    	ACL.put("secret", "ADM");
     }
     public void run()
     {
@@ -49,7 +52,7 @@ public class TCPServer extends Thread{
 	    				Socket ss= new Socket("localhost", 9001);
 	    				ObjectOutputStream get = new ObjectOutputStream(ss.getOutputStream());
 	    				get.flush();
-	    				obj.setCommunity("password");
+	    				obj.setCommunity("secret");
 	    				get.writeObject(obj);
 	    				ObjectInputStream ois1 = new ObjectInputStream(ss.getInputStream());   
 	    			 	SNMP response = (SNMP)ois1.readObject();
@@ -83,7 +86,7 @@ public class TCPServer extends Thread{
 	    			Socket ss = new Socket("localhost", 9001);
 	    			ObjectOutputStream set = new ObjectOutputStream(ss.getOutputStream());
 	    			set.flush();
-	    			obj.setCommunity("password");
+	    			obj.setCommunity("secret");
 	    			set.writeObject(obj);
 	    			set.flush();
 	    			ObjectInputStream in = new ObjectInputStream(ss.getInputStream());
@@ -112,8 +115,14 @@ public class TCPServer extends Thread{
     }
     
 	private int CheckCommunity(String community) {
-		
-		return 0;
+		if (ACL.get(community).equals("RO"))
+			return 0;
+		else if(ACL.get(community).equals("RW"))
+			return 1;
+		else if(ACL.get(community).equals("ADM"))
+			return 2;
+		else
+			return -1;
 	}
 	private void CheckStatus(Socket socket) throws ClassNotFoundException, IOException {
 		if(Status)

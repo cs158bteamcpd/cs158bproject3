@@ -133,8 +133,7 @@ public class ClientGui extends JPanel implements ActionListener{
 								.getInputStream());
 
 						// get the RMONevent response
-						ArrayList<RMONEvent> response = (ArrayList<RMONEvent>) ois
-								.readObject();
+						ArrayList<RMONEvent> response = (ArrayList<RMONEvent>) ois.readObject();
 
 						for (int i = 0; i < response.size(); i++) {
 							// System.out.println(response.vBinding.get(OID));
