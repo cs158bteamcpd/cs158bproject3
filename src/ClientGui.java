@@ -598,6 +598,15 @@ public class ClientGui extends JPanel implements ActionListener{
 		});
         
         
+        //JPanel for buttons
+        JPanel buttonPane = new JPanel();
+        buttonPane.setLayout(new BoxLayout(buttonPane, BoxLayout.LINE_AXIS));
+        buttonPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        buttonPane.add(Box.createHorizontalGlue());
+        buttonPane.add(newRowButton);
+        buttonPane.add(Box.createRigidArea(new Dimension(10, 0)));
+        buttonPane.add(submitButton);
+        
 		//Add Components to this panel.
         GridBagConstraints c = new GridBagConstraints();
         c.gridwidth = GridBagConstraints.REMAINDER;
@@ -607,11 +616,11 @@ public class ClientGui extends JPanel implements ActionListener{
 
 		// Add the scroll pane to this panel.
 		tablePane.add(scrollPane, c);
-
+		tablePane.add(buttonPane, c);
+		
 		// Add contents to the window.
 		frame.add(tablePane);
         
-		
         //Display the window.
         frame.pack(); // this packs all the components in the frame
         //frame.setSize(400, 400);
