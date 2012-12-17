@@ -31,20 +31,21 @@ import javax.swing.table.TableModel;
 public class ClientGui extends JPanel implements ActionListener{
 
 	private static Socket s;
-	private ObjectOutputStream oos;
+	private static ObjectOutputStream oos;
 	private ObjectInputStream ois;
 
-	protected JTextField textFieldHost;
-	protected JTextField textFieldPort;
+	protected static JTextField textFieldHost;
+	protected static JTextField textFieldPort;
 	protected static JTextField textFieldOID;
-	protected JTextField textFieldCommStr;
+	protected static JTextField textFieldCommStr;
     protected JTextArea textArea;
     protected JTextArea textAreaAlarm;
     protected JComboBox comboBoxMethods;
     protected static JTextField textFieldSet;
     private static SNMP snmp = new SNMP();//empty SNMP Object
     
-    
+    private static JTable table;
+    private static AbstractTableModel abstractTableModel;
     private static Hashtable<String, String> hashAclTable;
     
     
@@ -506,7 +507,7 @@ public class ClientGui extends JPanel implements ActionListener{
 		JPanel tablePane = new JPanel(new GridBagLayout());
 
 		//aclTable = new MyTableModel();
-		aclTable.clearTable();
+		//aclTable.clearTable();
 		//Object[] newData = {"password", ""};
 		//Object[] newData1 = {"wordword", ""};
  		//aclTable.addData(newData);
@@ -515,7 +516,7 @@ public class ClientGui extends JPanel implements ActionListener{
 		//populate table with hashtable
 		aclTable.populateTable(hashAclTable);
 		
-		JTable table = new JTable(aclTable);
+		/*JTable*/ table = new JTable(aclTable);
 
 		//Table Column
 		TableColumn aclTypeColumn = table.getColumnModel().getColumn(1); 
@@ -532,14 +533,18 @@ public class ClientGui extends JPanel implements ActionListener{
 
 			public void tableChanged(TableModelEvent evt) 
 			{
+		        //AbstractTableModel model = (AbstractTableModel)evt.getSource();
+		        abstractTableModel = (AbstractTableModel)evt.getSource();
+		        //model.fireTableRowsInserted(
+		        //		aclTable.getColumnCount()-1, aclTable.getColumnCount()-1);
+				
 				int row = evt.getFirstRow();
 		        int column = evt.getColumn();
-		        TableModel model = (TableModel)evt.getSource();
-		        String columnName = model.getColumnName(column);
-		        Object data = model.getValueAt(row, column);
+		        //String columnName = model.getColumnName(column);
+		        Object data = abstractTableModel.getValueAt(row, column);
 
-		        model.setValueAt(data, row, column);
-		        aclTable.fireTableCellUpdated(row, column);
+		        abstractTableModel.setValueAt(data, row, column);
+		        abstractTableModel.fireTableCellUpdated(row, column);
 			}
 		});
 
@@ -559,8 +564,10 @@ public class ClientGui extends JPanel implements ActionListener{
             {
         		Object[] newData = {"", ""};//empty data
          		aclTable.addData(newData);
-         		aclTable.fireTableStructureChanged();
-			}
+         		table.revalidate();
+         		table.repaint();
+         		aclTable.fireTableDataChanged();
+            }
 		});
 		
         //create button submit data
@@ -572,22 +579,43 @@ public class ClientGui extends JPanel implements ActionListener{
         		//This is were we write back to the Server about
         		//The table change
         		
-        		for (int i = 0; i < aclTable.getData().length; i++)
-        		{
-        			hashAclTable.put((String) aclTable.getData()[i][0], (String) aclTable.getData()[i][1]);
-        		}
-        		
-        		
-        		// create the OutputStream to write
-				ObjectOutputStream oos;
 				try {
-					
-					oos = new ObjectOutputStream(s
+					/*
+					// create the OutputStream to write
+					ObjectOutputStream oos;
+					 oos = new ObjectOutputStream(s
 							.getOutputStream());
+					*/
 					
+					for (int i = 0; i < aclTable.getData().length; i++)
+	        		{
+	        			hashAclTable.put((String) aclTable.getData()[i][0], (String) aclTable.getData()[i][1]);
+	        		}
+	        		
+					//checking socket connection
+					Socket s = new Socket(textFieldHost.getText(), Integer
+							.parseInt(textFieldPort.getText()));
+					
+					Hashtable<String, String> ht = new Hashtable<String, String>();
+
+					ht.put(textFieldOID.getText(), textFieldOID.getText());
+
+					snmp = new SNMP("1", textFieldCommStr.getText(), "1",
+							"SET", ht);
+
+					//snmp.setFlag();
+					snmp.setACL();
+					
+					// create the OutputStream to write
+					ObjectOutputStream oos = new ObjectOutputStream(s
+							.getOutputStream());
 					// write the SNMP object to server
-					oos.writeObject(hashAclTable);
+					oos.writeObject(snmp);
+					oos.flush();
 					
+					// write the Hashtable object to server
+					oos.writeObject(hashAclTable);
+					oos.flush();
 					
 					frame.dispose();
 				} catch (IOException e) {
