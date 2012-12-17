@@ -583,6 +583,9 @@ public class ClientGui extends JPanel implements ActionListener{
 					
 					// write the SNMP object to server
 					oos.writeObject(hashAclTable);
+					
+					
+					frame.dispose();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
