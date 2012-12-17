@@ -8,7 +8,7 @@ public class TCPServer extends Thread{
 	private static ArrayList<RMONEvent> rMonEvent;
     private Hashtable<String,String> ACL = new Hashtable<String,String>();
     private ServerSocket s;
-    private final String NEHOST = "localhost";
+    private final String NEHOST = "192.168.0.192";
 
 	private boolean Status = false;
     private static int neport=9000;
@@ -25,6 +25,7 @@ public class TCPServer extends Thread{
     	try {
     		while(!s.isClosed()){
     			Socket socket = s.accept();
+    			//System.out.println("Connected");
     			InputStream is = socket.getInputStream();
     			ObjectInputStream ois = new ObjectInputStream(is);  
     			SNMP obj = (SNMP)ois.readObject();
@@ -56,6 +57,14 @@ public class TCPServer extends Thread{
 		    			oos.flush();
 		    			oos.close();
 		    			}
+		    			else if (obj.setacl)
+		    			{
+		    				ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+			    			oos.flush();
+			    			oos.writeObject(ACL);
+			    			oos.flush();
+			    			oos.close();
+		    			}
 		    			else
 		    			{
 		    				Socket ss= new Socket(NEHOST, 9001);
@@ -78,7 +87,7 @@ public class TCPServer extends Thread{
 	    		}
 	    		else if(obj.pdutype.equalsIgnoreCase("SET")&& CheckCommunity(obj.getCommunity())>0)
 	    		{
-	    			if(obj.status.equalsIgnoreCase("OFF")&&(obj.flag))
+	    			if((obj.status.equalsIgnoreCase("OFF"))&&(obj.flag))
 	    			{
 	    				Status = true; //OFFFFF
 	    				CheckStatus(socket);
@@ -91,6 +100,15 @@ public class TCPServer extends Thread{
 	    				set.writeObject("SNMP Agent enabled");
 	    				set.flush();
 	    				set.close();
+	    			}
+	    			else if(obj.setacl&&!(CheckStatus(socket)))
+	    			{
+	    				
+	    				ObjectInputStream ios = new ObjectInputStream(socket.getInputStream());
+		    			//oos.flush();
+		    			ACL = (Hashtable<String, String>)ios.readObject();
+		    			//oos.flush();
+		    			ios.close();
 	    			}
 	    			else{
 	    				Socket ss = new Socket(NEHOST, 9001);
@@ -123,19 +141,19 @@ public class TCPServer extends Thread{
     		//is.close();  
     		//s.close();    
     		}catch(Exception e){
-    			System.out.println(e.getMessage());
+    			e.printStackTrace();
     		}
     	
     }
     
 	private int CheckCommunity(String community) {
 		if (ACL.containsKey(community)||community.equals("secret"))
-			if (ACL.get(community).equals("RO"))
-				return 0;
+			if (community.equals("secret")||ACL.get(community).equals("ADM"))
+				return 2;
 			else if(ACL.get(community).equals("RW"))
 				return 1;
-			else if(ACL.get(community).equals("ADM")||community.equals("secret"))
-				return 2;
+			else if(ACL.get(community).equals("RO"))
+				return 0;
 		return -1;
 	}
 	private boolean CheckStatus(Socket socket) throws ClassNotFoundException, IOException {
@@ -157,7 +175,10 @@ public class TCPServer extends Thread{
     	ServerSocket ness = new ServerSocket(neport);
     	ServerSocket cis = new ServerSocket(cport);
     	TCPServer server = new TCPServer(ness, rmon);
+    	//System.out.print("Waiting for connections: ");
 		server.start();
+		if(ness.isBound())
+			System.out.println("Connected");
 		TCPServer cserver = new TCPServer(cis, rmon);
 		cserver.start();
     	while(!(ness.isClosed() && cis.isClosed()) );

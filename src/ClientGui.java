@@ -285,12 +285,12 @@ public class ClientGui extends JPanel implements ActionListener{
 						ht.put(textFieldOID.getText(), textFieldOID.getText());
 
 						snmp = new SNMP("1", textFieldCommStr.getText(), "1",
-								"SET", ht);
+								"GET", ht);
 
-						snmp.setFlag();
+						//snmp.setFlag();
 						snmp.setACL();
 
-						// setting the SNMP Agent status, enable/disable
+						/*// setting the SNMP Agent status, enable/disable
 						if (snmpAgentStatus.equalsIgnoreCase("ON")) {
 							// if on set off
 							snmp.setStatus("OFF");
@@ -299,7 +299,7 @@ public class ClientGui extends JPanel implements ActionListener{
 							// otherwise turn on
 							snmp.setStatus("ON");
 							snmpAgentStatus = "ON";
-						}
+						}*/
 
 						// create the OutputStream to write
 						ObjectOutputStream oos = new ObjectOutputStream(s
@@ -313,13 +313,16 @@ public class ClientGui extends JPanel implements ActionListener{
 						// Now Wait for response
 						ObjectInputStream ois = new ObjectInputStream(s
 								.getInputStream());
-					
+						Object obj = ois.readObject();
+						if(obj instanceof String)
+							System.out.println((String)obj);
+						else{
 						Hashtable<String, String> response =
-								(Hashtable<String, String>) ois.readObject();
+								(Hashtable<String, String>) obj;
 						
 						
 						//then we try to populate table
-						createTableGUI(response);
+						createTableGUI(response);}
 					}
 					else
 					{
